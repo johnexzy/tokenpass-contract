@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-contract Access is AccessControl, Initializable {
+contract TokenGate is AccessControl, Initializable {
     /**
      * Register all access tokens
      * deactivate access token by setting it's address to 'false'
@@ -35,8 +35,8 @@ contract Access is AccessControl, Initializable {
      */
     AccessToken[] public accessTokens;
 
-    function initialize(address root) public initializer{
-        _setupRole(DEFAULT_ADMIN_ROLE, root);
+    function initialize() public initializer{
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function initializeAccessTokens(AccessToken[] memory _accessTokens) public onlyRole(DEFAULT_ADMIN_ROLE) {
