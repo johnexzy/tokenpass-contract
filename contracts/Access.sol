@@ -3,36 +3,43 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-
-contract Access {
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+contract Access is AccessControl, Initializable {
     /**
      * Register all access tokens
      * deactivate access token by setting it's address to 'false'
      */
     mapping(address => bool) private allAccessTokens;
 
-
-    string public constant ERC_721 = "ERC721";
-    string public constant ERC_1155 = "ERC1155";
+    bytes32 public constant ERC_721 = "ERC721";
+    bytes32 public constant ERC_1155 = "ERC1155";
 
     /**
      * The schema used in initislizing Access Tokens
-     * `lifetime` 
+     * `lifetime`
      */
     struct AccessToken {
         address contractAddress;
-        string typeOf;
+        bytes32 typeOfToken;
         int256 specifyId; //
         bool lifetime;
     }
+
+    /**
+     * array of access tokens.
+     * deleting element from the accessTokens will incur high gas fees
+     * as a result to disable tokens from having lifetime access
+     * set the contract address in `allAccessToken` to `false`
+     * by calling the `disableTokenAccess()`
+     */
     AccessToken[] public accessTokens;
 
-    // function intialize(address theOrigin, address collectibles) public {
-    //     Origin = IERC721(theOrigin);
-    //     Collectibles = IERC1155(collectibles);
-    // }
+    function initialize(address root) public initializer{
+        _setupRole(DEFAULT_ADMIN_ROLE, root);
+    }
 
-    function initializeAccessTokens(AccessToken[] memory _accessTokens) public {
+    function initializeAccessTokens(AccessToken[] memory _accessTokens) public onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _accessTokens.length; i++) {
             allAccessTokens[_accessTokens[i].contractAddress] = true;
             accessTokens.push(_accessTokens[i]);
@@ -44,10 +51,7 @@ contract Access {
         for (uint256 i = 0; i < accessTokens.length; i++) {
             AccessToken memory contractObj = accessTokens[i];
             if (allAccessTokens[contractObj.contractAddress]) {
-                if (
-                    keccak256(bytes(contractObj.typeOf)) ==
-                    keccak256(bytes(ERC_721))
-                ) {
+                if (contractObj.typeOfToken == ERC_721) {
                     if (
                         contractObj.specifyId == -1 &&
                         balanceOf(contractObj.contractAddress)
@@ -58,7 +62,10 @@ contract Access {
                         contractObj.specifyId != -1 &&
                         balanceOf(contractObj.contractAddress)
                     ) {
-                        subscribed = ownerOf(contractObj.contractAddress, contractObj.specifyId);
+                        subscribed = ownerOf(
+                            contractObj.contractAddress,
+                            contractObj.specifyId
+                        );
                     }
                 }
             }
@@ -76,6 +83,11 @@ contract Access {
         view
         returns (bool)
     {
-        return IERC721(_contractAddress).ownerOf(uint(id)) == msg.sender;
+        return IERC721(_contractAddress).ownerOf(uint256(id)) == msg.sender;
+    }
+
+    function disableTokenAccess(address _contractAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(allAccessTokens[_contractAddress], "Token does not exist");
+        allAccessTokens[_contractAddress] = false;
     }
 }
