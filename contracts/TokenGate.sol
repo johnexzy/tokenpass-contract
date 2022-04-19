@@ -5,15 +5,19 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract TokenGate is AccessControl, Initializable {
     mapping(address => bool) private allAccessTokens;
 
+    /** SUPPORTED TOKEN TYPES **/
     bytes32 public constant ERC_721 = "ERC721";
     bytes32 public constant ERC_1155 = "ERC1155";
     bytes32 public constant ERC_20 = "ERC20";
 
+    /** SUPPORTED SUBSCRIPTION TYPES **/
+    bytes32 public constant SubscriptionTypeMonthly = "MONTHLY";
     /**
      * The schema used in initislizing Access Tokens
      * `lifetime`
@@ -24,6 +28,18 @@ contract TokenGate is AccessControl, Initializable {
         int256 specifyId; // -1 if not needed. required for ERC1155 and optional for ERC721
         bool lifetime; //true
         uint256 amount; //required for ERC1155, ERC20 optional for ERC721
+    }
+
+    struct AccessFee {
+        uint256 price;
+        bytes32 subscriptionType;
+    }
+
+    struct Subscriber {
+        address subcriberAddress;
+        uint256 dateOfSubscription;
+        uint256 dateOfExpiration;
+        bytes32 subscriptionType;
     }
 
     /**
@@ -38,6 +54,8 @@ contract TokenGate is AccessControl, Initializable {
      * by calling the `disableTokenAccess()`
      */
     AccessToken[] public accessTokens;
+    AccessFee public fee;
+    Subscriber[] public allSubscribers;
 
     /**
      * Constructor. sets Role to DEFAULT_AMIN_ROLE
@@ -91,6 +109,9 @@ contract TokenGate is AccessControl, Initializable {
         return subscribed;
     }
 
+    /**
+     *
+     */
     function handleERC721Access(
         AccessToken memory contractObj,
         address userAddress
@@ -159,11 +180,56 @@ contract TokenGate is AccessControl, Initializable {
         return IERC721(_contractAddress).ownerOf(uint256(id)) == userAddress;
     }
 
+    function setFee(uint256 _price, string memory _subscriptionType)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        fee = AccessFee({
+            price: _price,
+            subscriptionType: stringToBytes32(_subscriptionType)
+        });
+    }
+
+    function subscribe() external payable {
+        require(msg.value >= fee.price, "Ether value sent is not correct");
+
+        allSubscribers.push(
+            Subscriber({
+                subcriberAddress: msg.sender,
+                dateOfSubscription: block.timestamp,
+                dateOfExpiration: block.timestamp + 30 days,
+                subscriptionType: SubscriptionTypeMonthly
+                
+            })
+        );
+    }
+
     function disableTokenAccess(address _contractAddress)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         require(allAccessTokens[_contractAddress], "Token does not exist");
         allAccessTokens[_contractAddress] = false;
+    }
+
+    /** UTILITY FUNCTION **/
+    function stringToBytes32(string memory source)
+        public
+        pure
+        returns (bytes32 result)
+    {
+        bytes memory tempEmptyStringTest = bytes(source);
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
+
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
+
+    function withrawETH() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 balance = address(this).balance;
+        Address.sendValue(payable(msg.sender), balance);
     }
 }
