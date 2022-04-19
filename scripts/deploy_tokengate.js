@@ -2,11 +2,9 @@
 const { ethers, upgrades, run } = require("hardhat");
 
 async function main() {
-  const TokenGate = await ethers.getContractFactory("TokenGateway");
+  const TokenGate = await ethers.getContractFactory("TokenGate");
   console.log("Deploying TokenGate...");
-  const contract = await upgrades.deployProxy(TokenGate, [], {
-    initializer: "intialize",
-  });
+  const contract = await upgrades.deployProxy(TokenGate);
   await contract.deployed();
   console.log("TokenGate deployed to:", contract.address);
   await run("verify:verify", {

@@ -1,0 +1,157 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0xC675e6e5C107F6778A4e2e170ce8156D3277B2eF",
+    "txHash": "0xd7dffe3a74ec65da19936470b1e929407e7ec2a0b53c69e764d039e49461ee03"
+  },
+  "proxies": [
+    {
+      "address": "0x966AaB67ad3C09ACe0AEC67a647F2728f2741117",
+      "txHash": "0x56b260a0048c367b40b64173c1639b48170a4e66c7c42a4662b00bb3013c81cf",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x51EFA07FDE65416A037976a387bD42a0EB787875",
+      "txHash": "0x905b8fc8f7b6eab49232aa6ba8b31af258f885475e496b47842af4b34997439c",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x359829a77A2c44B90D03aB69ac5C7155Ff759C5e",
+      "txHash": "0x7923f860a4a3802599dc798c4d65d8d648ddeac30336ae129b9876e5be540061",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x199F68a117Aa51f5816719abd037C0470F705054",
+      "txHash": "0xfb1849c26dac8b666e15bd0145bf4779ac5e16bb1b4a19aa7a7cd5aac828b9ec",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "44d7bf17dc88991c1ce58d51c24f986d10623b6cf077e929ed526f856997bf35": {
+      "address": "0x1d354897C7cC13b8A1cDD3D331Ca712Fc6ED08B9",
+      "txHash": "0xa4cf2e817088cf73bb6ef9515c85286ad2141ca6ffe51a5935f917b6728ddf80",
+      "layout": {
+        "storage": [
+          {
+            "label": "_roles",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_bytes32,t_struct(RoleData)336_storage)",
+            "contract": "AccessControl",
+            "src": "@openzeppelin/contracts/access/AccessControl.sol:55"
+          },
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "1",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "label": "allAccessTokens",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "TokenGate",
+            "src": "contracts/TokenGate.sol:11"
+          },
+          {
+            "label": "accessTokens",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_array(t_struct(AccessToken)1226_storage)dyn_storage",
+            "contract": "TokenGate",
+            "src": "contracts/TokenGate.sol:34"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(AccessToken)1226_storage)dyn_storage": {
+            "label": "struct TokenGate.AccessToken[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_int256": {
+            "label": "int256",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)336_storage)": {
+            "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessToken)1226_storage": {
+            "label": "struct TokenGate.AccessToken",
+            "members": [
+              {
+                "label": "contractAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "typeOfToken",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "specifyId",
+                "type": "t_int256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "lifetime",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(RoleData)336_storage": {
+            "label": "struct AccessControl.RoleData",
+            "members": [
+              {
+                "label": "members",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          }
+        }
+      }
+    }
+  }
+}
