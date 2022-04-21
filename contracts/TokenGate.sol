@@ -58,7 +58,7 @@ contract TokenGate is AccessControl, Initializable {
     Subscriber[] public allSubscribers;
 
     /**
-     * Constructor. sets Role to DEFAULT_AMIN_ROLE
+     * Constructor. sets Role to DEFAULT_ADMIN_ROLE
      */
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
