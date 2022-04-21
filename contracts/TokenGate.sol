@@ -113,6 +113,7 @@ contract TokenGate is AccessControl, Initializable {
 
     function checkAccess(address userAddress) public view returns (bool) {
         bool subscribed = false;
+        if (checkIfSubscribed(userAddress)) return true;
         for (uint256 i = 0; i < accessTokens.length; i++) {
             if (allAccessTokens[accessTokens[i].contractAddress])
                 if (
