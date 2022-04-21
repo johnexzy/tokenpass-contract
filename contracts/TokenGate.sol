@@ -5,33 +5,38 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract TokenGate is AccessControl, Initializable {
     mapping(address => bool) private allAccessTokens;
 
-    /** SUPPORTED TOKEN TYPES **/
+    /** ====SUPPORTED TOKEN TYPES======== **/
     bytes32 public constant ERC_721 = "ERC721";
     bytes32 public constant ERC_1155 = "ERC1155";
     bytes32 public constant ERC_20 = "ERC20";
 
-    /** SUPPORTED SUBSCRIPTION TYPES **/
+    /** =====SUPPORTED SUBSCRIPTION TYPES===== **/
     bytes32 public constant SubscriptionTypeMonthly = "MONTHLY";
+
+    /** =====SUPPORTED ROLES======= **/
+    /** The Deployer is inherits the admin role */
+    bytes32 public constant ADMIN_ROLE = 0x00;
+    bytes32 public constant TOKEN_MODERATORS = "TOKEN_MODERATORS";
 
     /** EVENTS **/
     event Initialized(address indexed initializer);
     event AddedAccessToken(
         address indexed contractAddress,
-        bytes32 typeOfToken,
-        int256 id,
-        uint256 amount
+        bytes32 indexed typeOfToken,
+        int256 indexed id,
+        uint256  amount
     );
     event SetFee(uint256 indexed price, string indexed subscriptionType);
     event Subscribed(
         address indexed susbscriber,
-        uint256 dateOfSubscription,
-        uint256 dateOfExpiration
+        uint256 indexed dateOfSubscription,
+        uint256 indexed dateOfExpiration
     );
     event DisableTokenAccess(address indexed contractAddress);
     /**
@@ -78,13 +83,15 @@ contract TokenGate is AccessControl, Initializable {
      * Constructor. sets Role to DEFAULT_AMIN_ROLE
      */
     function initialize() public initializer {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(ADMIN_ROLE, msg.sender);
+        _grantRole(TOKEN_MODERATORS, msg.sender);
+
         emit Initialized(msg.sender);
     }
 
     function initializeAccessToken(AccessToken memory _accessToken)
         public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(TOKEN_MODERATORS)
     {
         require(
             _accessToken.typeOfToken == ERC_1155 ||
@@ -142,9 +149,6 @@ contract TokenGate is AccessControl, Initializable {
         return false;
     }
 
-    /**
-     *
-     */
     function handleERC721Access(
         AccessToken memory contractObj,
         address userAddress
@@ -215,7 +219,7 @@ contract TokenGate is AccessControl, Initializable {
 
     function setFee(uint256 _price, string memory _subscriptionType)
         public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(ADMIN_ROLE)
     {
         fee = AccessFee({
             price: _price,
@@ -239,7 +243,7 @@ contract TokenGate is AccessControl, Initializable {
 
     function disableTokenAccess(address _contractAddress)
         public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+        onlyRole(ADMIN_ROLE)
     {
         require(allAccessTokens[_contractAddress], "Token does not exist");
         allAccessTokens[_contractAddress] = false;
@@ -262,8 +266,8 @@ contract TokenGate is AccessControl, Initializable {
         }
     }
 
-    function withrawETH() public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function withrawETH() public onlyRole(ADMIN_ROLE) {
         uint256 balance = address(this).balance;
-        Address.sendValue(payable(msg.sender), balance);
+        AddressUpgradeable.sendValue(payable(msg.sender), balance);
     }
 }
