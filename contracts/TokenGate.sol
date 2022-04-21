@@ -28,6 +28,11 @@ contract TokenGate is AccessControl, Initializable {
         uint256 amount
     );
     event SetFee(uint256 indexed price, string indexed subscriptionType);
+    event Subscribed(
+        address indexed susbscriber,
+        uint256 dateOfSubscription,
+        uint256 dateOfExpiration
+    );
     event DisableTokenAccess(address indexed contractAddress);
     /**
      * The schema used in initislizing Access Tokens
@@ -47,7 +52,7 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     struct Subscriber {
-        address subcriberAddress;
+        address subscriberAddress;
         uint256 dateOfSubscription;
         uint256 dateOfExpiration;
         bytes32 subscriptionType;
@@ -126,6 +131,14 @@ contract TokenGate is AccessControl, Initializable {
             if (subscribed) break;
         }
         return subscribed;
+    }
+
+    function checkIfSubscribed(address userAddress) public view returns (bool) {
+        if (allSubscribers[userAddress].subscriberAddress != address(0))
+            if (allSubscribers[userAddress].dateOfExpiration > block.timestamp)
+                return false;
+            else return true;
+        return false;
     }
 
     /**
@@ -214,11 +227,13 @@ contract TokenGate is AccessControl, Initializable {
         require(msg.value >= fee.price, "Ether value sent is not correct");
 
         allSubscribers[msg.sender] = Subscriber({
-            subcriberAddress: msg.sender,
+            subscriberAddress: msg.sender,
             dateOfSubscription: block.timestamp,
             dateOfExpiration: block.timestamp + 30 days,
             subscriptionType: SubscriptionTypeMonthly
         });
+
+        emit Subscribed(msg.sender, block.timestamp, block.timestamp + 30 days);
     }
 
     function disableTokenAccess(address _contractAddress)
