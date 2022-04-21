@@ -137,8 +137,8 @@ contract TokenGate is AccessControl, Initializable {
     function checkIfSubscribed(address userAddress) public view returns (bool) {
         if (allSubscribers[userAddress].subscriberAddress != address(0))
             if (allSubscribers[userAddress].dateOfExpiration > block.timestamp)
-                return false;
-            else return true;
+                return true;
+            else return false;
         return false;
     }
 
