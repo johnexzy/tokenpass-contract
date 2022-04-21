@@ -18,6 +18,22 @@ contract TokenGate is AccessControl, Initializable {
 
     /** SUPPORTED SUBSCRIPTION TYPES **/
     bytes32 public constant SubscriptionTypeMonthly = "MONTHLY";
+
+    /** EVENTS **/
+    event Initialized(address indexed initializer);
+    event AddedAccessToken(
+        address indexed contractAddress,
+        bytes32 typeOfToken,
+        int256 id,
+        uint256 amount
+    );
+    event SetFee(uint256 indexed price, string indexed subscriptionType);
+    event Subscribed(
+        address indexed susbscriber,
+        uint256 dateOfSubscription,
+        uint256 dateOfExpiration
+    );
+    event DisableTokenAccess(address indexed contractAddress);
     /**
      * The schema used in initislizing Access Tokens
      * `lifetime`
@@ -36,7 +52,7 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     struct Subscriber {
-        address subcriberAddress;
+        address subscriberAddress;
         uint256 dateOfSubscription;
         uint256 dateOfExpiration;
         bytes32 subscriptionType;
@@ -55,13 +71,15 @@ contract TokenGate is AccessControl, Initializable {
      */
     AccessToken[] public accessTokens;
     AccessFee public fee;
-    Subscriber[] public allSubscribers;
+    // Subscriber[] public allSubscribers;
+    mapping(address => Subscriber) public allSubscribers;
 
     /**
      * Constructor. sets Role to DEFAULT_ADMIN_ROLE
      */
     function initialize() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        emit Initialized(msg.sender);
     }
 
     function initializeAccessToken(AccessToken memory _accessToken)
@@ -85,10 +103,17 @@ contract TokenGate is AccessControl, Initializable {
         }
         allAccessTokens[_accessToken.contractAddress] = true;
         accessTokens.push(_accessToken);
+        emit AddedAccessToken(
+            _accessToken.contractAddress,
+            _accessToken.typeOfToken,
+            _accessToken.specifyId,
+            _accessToken.amount
+        );
     }
 
     function checkAccess(address userAddress) public view returns (bool) {
         bool subscribed = false;
+        if (checkIfSubscribed(userAddress)) return true;
         for (uint256 i = 0; i < accessTokens.length; i++) {
             if (allAccessTokens[accessTokens[i].contractAddress])
                 if (
@@ -107,6 +132,14 @@ contract TokenGate is AccessControl, Initializable {
             if (subscribed) break;
         }
         return subscribed;
+    }
+
+    function checkIfSubscribed(address userAddress) public view returns (bool) {
+        if (allSubscribers[userAddress].subscriberAddress != address(0))
+            if (allSubscribers[userAddress].dateOfExpiration > block.timestamp)
+                return true;
+            else return false;
+        return false;
     }
 
     /**
@@ -188,20 +221,20 @@ contract TokenGate is AccessControl, Initializable {
             price: _price,
             subscriptionType: stringToBytes32(_subscriptionType)
         });
+        emit SetFee(_price, _subscriptionType);
     }
 
     function subscribe() external payable {
         require(msg.value >= fee.price, "Ether value sent is not correct");
 
-        allSubscribers.push(
-            Subscriber({
-                subcriberAddress: msg.sender,
-                dateOfSubscription: block.timestamp,
-                dateOfExpiration: block.timestamp + 30 days,
-                subscriptionType: SubscriptionTypeMonthly
-                
-            })
-        );
+        allSubscribers[msg.sender] = Subscriber({
+            subscriberAddress: msg.sender,
+            dateOfSubscription: block.timestamp,
+            dateOfExpiration: block.timestamp + 30 days,
+            subscriptionType: SubscriptionTypeMonthly
+        });
+
+        emit Subscribed(msg.sender, block.timestamp, block.timestamp + 30 days);
     }
 
     function disableTokenAccess(address _contractAddress)
@@ -210,6 +243,7 @@ contract TokenGate is AccessControl, Initializable {
     {
         require(allAccessTokens[_contractAddress], "Token does not exist");
         allAccessTokens[_contractAddress] = false;
+        emit DisableTokenAccess(_contractAddress);
     }
 
     /** UTILITY FUNCTION **/
