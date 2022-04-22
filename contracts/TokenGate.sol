@@ -30,7 +30,7 @@ contract TokenGate is AccessControl, Initializable {
         address indexed contractAddress,
         bytes32 indexed typeOfToken,
         int256 indexed id,
-        uint256  amount
+        uint256 amount
     );
     event SetFee(uint256 indexed price, string indexed subscriptionType);
     event Subscribed(
@@ -39,6 +39,7 @@ contract TokenGate is AccessControl, Initializable {
         uint256 indexed dateOfExpiration
     );
     event DisableTokenAccess(address indexed contractAddress);
+    event WithdrawBalance(uint256 amount, address indexed caller);
     /**
      * The schema used in initislizing Access Tokens
      * `lifetime`
@@ -48,7 +49,7 @@ contract TokenGate is AccessControl, Initializable {
         bytes32 typeOfToken; // "ERC20" or "ERC721" or "ERC1155" in bytes32
         int256 specifyId; // -1 if not needed. required for ERC1155 and optional for ERC721
         bool lifetime; //true
-        uint256 amount; //required for ERC1155, ERC20 optional for ERC721
+        uint256 amount; //required
     }
 
     struct AccessFee {
@@ -187,7 +188,8 @@ contract TokenGate is AccessControl, Initializable {
         /** ERC721 Token */
         if (_contractObj.typeOfToken == ERC_721)
             return
-                IERC721(_contractObj.contractAddress).balanceOf(userAddress) > 0
+                IERC721(_contractObj.contractAddress).balanceOf(userAddress) >=
+                    _contractObj.amount
                     ? true
                     : false;
         /** ERC1155 Token */
@@ -196,13 +198,13 @@ contract TokenGate is AccessControl, Initializable {
                 IERC1155(_contractObj.contractAddress).balanceOf(
                     userAddress,
                     uint256(_contractObj.specifyId)
-                ) > _contractObj.amount
+                ) >= _contractObj.amount
                     ? true
                     : false;
         /** ERC20 Token */
         else if (_contractObj.typeOfToken == ERC_20)
             return
-                IERC20(_contractObj.contractAddress).balanceOf(userAddress) >
+                IERC20(_contractObj.contractAddress).balanceOf(userAddress) >=
                     _contractObj.amount
                     ? true
                     : false;
@@ -269,5 +271,6 @@ contract TokenGate is AccessControl, Initializable {
     function withrawETH() public onlyRole(ADMIN_ROLE) {
         uint256 balance = address(this).balance;
         AddressUpgradeable.sendValue(payable(msg.sender), balance);
+        emit WithdrawBalance(balance, msg.sender);
     }
 }

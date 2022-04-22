@@ -2,6 +2,8 @@
   "name": "hardhat-project",
   "scripts": {
     "deploy:gates": "npx hardhat run scripts/deploy_tokengate.js --network rinkeby",
+    "test": "npx hardhat test",
+    "test:rinkeby": "npx hardhat test --network rinkeby",
     "verify:gates": "npx hardhat run scripts/verify.js --network rinkeby"
   },
   "devDependencies": {
