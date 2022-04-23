@@ -90,6 +90,12 @@ contract TokenGate is AccessControl, Initializable {
         emit Initialized(msg.sender);
     }
 
+    /**
+    * @dev initializeAccessToken: to suplly the contract with the info about the token contract to be used for gating access
+    * @param _accessToken: of datatype AccessToken to be passed as an array of values.
+    * the third value of the argument array: typeOfToken ("ERC20" or "ERC721" or "ERC1155" ) must be a byte value of the string, 
+    * the utility function stringToBytes32() can be used to convert to bytes
+    */
     function initializeAccessToken(AccessToken memory _accessToken)
         public
         onlyRole(TOKEN_MODERATORS)
