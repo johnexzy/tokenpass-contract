@@ -9,8 +9,6 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract TokenGate is AccessControl, Initializable {
-    mapping(address => bool) private allAccessTokens;
-
     /** ====SUPPORTED TOKEN TYPES======== **/
     bytes32 public constant ERC_721 = "ERC721";
     bytes32 public constant ERC_1155 = "ERC1155";
@@ -30,13 +28,20 @@ contract TokenGate is AccessControl, Initializable {
         address indexed contractAddress,
         bytes32 indexed typeOfToken,
         int256 indexed id,
-        uint256 amount
+        uint256 amount,
+        uint256 price,
+        uint256 duration
     );
-    event SetFee(uint256 indexed price, string indexed subscriptionType);
+    event SetFee(
+        address contractAddress,
+        uint256 indexed price,
+        uint256 indexed duration
+    );
     event Subscribed(
         address indexed susbscriber,
+        address indexed contractAddress,
         uint256 indexed dateOfSubscription,
-        uint256 indexed dateOfExpiration
+        uint256 dateOfExpiration
     );
     event DisableTokenAccess(address indexed contractAddress);
     event WithdrawBalance(uint256 amount, address indexed caller);
@@ -48,20 +53,19 @@ contract TokenGate is AccessControl, Initializable {
         address contractAddress; // contract address of the access token (ERC20, ERC721 or ERC1155)
         bytes32 typeOfToken; // "ERC20" or "ERC721" or "ERC1155" in bytes32
         int256 specifyId; // -1 if not needed. required for ERC1155 and optional for ERC721
-        bool lifetime; //true
+        AccessFee subscriptionFee; // set price for subscription
         uint256 amount; //required
     }
 
     struct AccessFee {
         uint256 price;
-        bytes32 subscriptionType;
+        uint256 duration;
     }
 
     struct Subscriber {
         address subscriberAddress;
         uint256 dateOfSubscription;
         uint256 dateOfExpiration;
-        bytes32 subscriptionType;
     }
 
     /**
@@ -75,10 +79,17 @@ contract TokenGate is AccessControl, Initializable {
      *
      * by calling the `disableTokenAccess()`
      */
-    AccessToken[] public accessTokens;
-    AccessFee public fee;
+
     // Subscriber[] public allSubscribers;
-    mapping(address => Subscriber) public allSubscribers;
+    mapping(address => mapping(address => Subscriber)) public allSubscribers;
+    mapping(address => AccessToken) private allAccessTokens;
+    mapping(address => address) public tokenAdmins;
+
+    // MODIFIER
+    modifier onlyTokenAdmin(address contractAddress) {
+        tokenAdmins[contractAddress] = msg.sender;
+        _;
+    }
 
     /**
      * Constructor. sets Role to DEFAULT_ADMIN_ROLE
@@ -115,43 +126,63 @@ contract TokenGate is AccessControl, Initializable {
         } else if (_accessToken.typeOfToken == ERC_20) {
             require(_accessToken.amount > 0, "No amount for ERC20 token");
         }
-        allAccessTokens[_accessToken.contractAddress] = true;
-        accessTokens.push(_accessToken);
+        allAccessTokens[_accessToken.contractAddress] = _accessToken;
+        tokenAdmins[_accessToken.contractAddress] = msg.sender;
         emit AddedAccessToken(
             _accessToken.contractAddress,
             _accessToken.typeOfToken,
             _accessToken.specifyId,
-            _accessToken.amount
+            _accessToken.amount,
+            _accessToken.subscriptionFee.price,
+            _accessToken.subscriptionFee.duration
         );
     }
 
-    function checkAccess(address userAddress) public view returns (bool) {
-        bool subscribed = false;
-        if (checkIfSubscribed(userAddress)) return true;
-        for (uint256 i = 0; i < accessTokens.length; i++) {
-            if (allAccessTokens[accessTokens[i].contractAddress])
-                if (
-                    accessTokens[i].typeOfToken == ERC_721 &&
-                    handleERC721Access(accessTokens[i], userAddress)
-                ) subscribed = true;
-                else if (
-                    accessTokens[i].typeOfToken == ERC_1155 &&
-                    handleERC1155Access(accessTokens[i], userAddress)
-                ) subscribed = true;
-                else if (
-                    accessTokens[i].typeOfToken == ERC_20 &&
-                    handleERC20Access(accessTokens[i], userAddress)
-                ) subscribed = true;
+    function checkAccess(address _contractAddress, address userAddress)
+        public
+        view
+        returns (bool)
+    {
+        if (checkIfSubscribed(_contractAddress, userAddress)) return true;
+        if (allAccessTokens[_contractAddress].contractAddress != address(0))
+            if (
+                allAccessTokens[_contractAddress].typeOfToken == ERC_721 &&
+                handleERC721Access(
+                    allAccessTokens[_contractAddress],
+                    userAddress
+                )
+            ) return true;
+            else if (
+                allAccessTokens[_contractAddress].typeOfToken == ERC_1155 &&
+                handleERC1155Access(
+                    allAccessTokens[_contractAddress],
+                    userAddress
+                )
+            ) return true;
+            else if (
+                allAccessTokens[_contractAddress].typeOfToken == ERC_20 &&
+                handleERC20Access(
+                    allAccessTokens[_contractAddress],
+                    userAddress
+                )
+            ) return true;
 
-            if (subscribed) break;
-        }
-        return subscribed;
+        return false;
     }
 
-    function checkIfSubscribed(address userAddress) public view returns (bool) {
-        if (allSubscribers[userAddress].subscriberAddress != address(0))
-            if (allSubscribers[userAddress].dateOfExpiration > block.timestamp)
-                return true;
+    function checkIfSubscribed(address _contractAddress, address userAddress)
+        public
+        view
+        returns (bool)
+    {
+        if (
+            allSubscribers[_contractAddress][userAddress].subscriberAddress !=
+            address(0)
+        )
+            if (
+                allSubscribers[_contractAddress][userAddress].dateOfExpiration >
+                block.timestamp
+            ) return true;
             else return false;
         return false;
     }
@@ -225,36 +256,60 @@ contract TokenGate is AccessControl, Initializable {
         return IERC721(_contractAddress).ownerOf(uint256(id)) == userAddress;
     }
 
-    function setFee(uint256 _price, string memory _subscriptionType)
-        public
-        onlyRole(ADMIN_ROLE)
-    {
-        fee = AccessFee({
+    function setFee(
+        address contractAddress,
+        uint256 _price,
+        uint256 numOfDays
+    ) public onlyTokenAdmin(contractAddress) {
+        allAccessTokens[contractAddress].subscriptionFee = AccessFee({
             price: _price,
-            subscriptionType: stringToBytes32(_subscriptionType)
+            duration: numOfDays * 1 days
         });
-        emit SetFee(_price, _subscriptionType);
+        emit SetFee(contractAddress, _price, numOfDays * 1 days);
     }
 
-    function subscribe() external payable {
-        require(msg.value >= fee.price, "Ether value sent is not correct");
+    function subscribe(address _contractAddress) external payable {
+        require(
+            msg.value >=
+                allAccessTokens[_contractAddress].subscriptionFee.price,
+            "Ether value sent is not correct"
+        );
 
-        allSubscribers[msg.sender] = Subscriber({
+        allSubscribers[_contractAddress][msg.sender] = Subscriber({
             subscriberAddress: msg.sender,
             dateOfSubscription: block.timestamp,
-            dateOfExpiration: block.timestamp + 30 days,
-            subscriptionType: SubscriptionTypeMonthly
+            dateOfExpiration: block.timestamp +
+                allAccessTokens[_contractAddress].subscriptionFee.duration
         });
 
-        emit Subscribed(msg.sender, block.timestamp, block.timestamp + 30 days);
+        emit Subscribed(
+            msg.sender,
+            _contractAddress,
+            allSubscribers[_contractAddress][msg.sender].dateOfSubscription,
+            allSubscribers[_contractAddress][msg.sender].dateOfExpiration
+        );
+    }
+
+    function getFeeForTokenAccess(address _contractAddress)
+        public
+        view
+        returns (uint256 price, uint256 duration)
+    {
+        (price, duration) = (
+            allAccessTokens[_contractAddress].subscriptionFee.price,
+            allAccessTokens[_contractAddress].subscriptionFee.duration
+        );
     }
 
     function disableTokenAccess(address _contractAddress)
         public
         onlyRole(ADMIN_ROLE)
     {
-        require(allAccessTokens[_contractAddress], "Token does not exist");
-        allAccessTokens[_contractAddress] = false;
+        require(
+            allAccessTokens[_contractAddress].contractAddress != address(0),
+            "Token does not exist"
+        );
+        delete allAccessTokens[_contractAddress];
         emit DisableTokenAccess(_contractAddress);
     }
 
