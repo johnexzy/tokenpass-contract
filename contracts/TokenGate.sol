@@ -142,34 +142,34 @@ contract TokenGate is AccessControl, Initializable {
     * @dev checkAccess: checks if an address meets the requirement for access set by an accessToken moderator.
     * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
     * @param _contractAddress: the address of the accessToken that the function wants to check user's access in
-    * @param userAddress: the address that the function wants to validate 
+    * @param _userAddress: the address that the function wants to validate 
     */
-    function checkAccess(address _contractAddress, address userAddress)
+    function checkAccess(address _contractAddress, address _userAddress)
         public
         view
         returns (bool)
     {
-        if (checkIfSubscribed(_contractAddress, userAddress)) return true;
+        if (checkIfSubscribed(_contractAddress, _userAddress)) return true;
         if (allAccessTokens[_contractAddress].contractAddress != address(0))
             if (
                 allAccessTokens[_contractAddress].typeOfToken == ERC_721 &&
                 handleERC721Access(
                     allAccessTokens[_contractAddress],
-                    userAddress
+                    _userAddress
                 )
             ) return true;
             else if (
                 allAccessTokens[_contractAddress].typeOfToken == ERC_1155 &&
                 handleERC1155Access(
                     allAccessTokens[_contractAddress],
-                    userAddress
+                    _userAddress
                 )
             ) return true;
             else if (
                 allAccessTokens[_contractAddress].typeOfToken == ERC_20 &&
                 handleERC20Access(
                     allAccessTokens[_contractAddress],
-                    userAddress
+                    _userAddress
                 )
             ) return true;
 
@@ -180,56 +180,82 @@ contract TokenGate is AccessControl, Initializable {
     * @dev checkIfSubscribed(): checks if an address has an actibe subscription in an accessToken.
     * the address doesn't need to have that accessToken (Fungible or Non-Fungible)
     * @param _contractAddress: the accessToken to check
-    * @param userAddress: the address to validate
+    * @param _userAddress: the address to validate
     */
-    function checkIfSubscribed(address _contractAddress, address userAddress)
+    function checkIfSubscribed(address _contractAddress, address _userAddress)
         public
         view
         returns (bool)
     {
         if (
-            allSubscribers[_contractAddress][userAddress].subscriberAddress !=
+            allSubscribers[_contractAddress][_userAddress].subscriberAddress !=
             address(0)
         )
             if (
-                allSubscribers[_contractAddress][userAddress].dateOfExpiration >
+                allSubscribers[_contractAddress][_userAddress].dateOfExpiration >
                 block.timestamp
             ) return true;
             else return false;
         return false;
     }
 
+    /**
+    * @dev handleERC721Access(): handles the call to the  main logic of validating an address' access in an accessToken.
+    * See checkAccess() function for usage
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    **/
     function handleERC721Access(
-        AccessToken memory contractObj,
-        address userAddress
+        AccessToken memory _contractObj,
+        address _userAddress
     ) internal view returns (bool) {
-        if (contractObj.specifyId == -1)
-            return balanceOf(contractObj, userAddress);
-        if (contractObj.specifyId != -1)
+        if (_contractObj.specifyId == -1)
+            return balanceOf(_contractObj, _userAddress);
+        if (_contractObj.specifyId != -1)
             return
                 ownerOf(
-                    contractObj.contractAddress,
-                    contractObj.specifyId,
-                    userAddress
+                    _contractObj.contractAddress,
+                    _contractObj.specifyId,
+                    _userAddress
                 );
         return false;
     }
 
+    /**
+    * @dev handleERC1155Access(): handles the call to the  main logic of validating an address' access in an accessToken.
+    * See checkAccess() function for usage
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    *
+    * 
+    **/
     function handleERC1155Access(
-        AccessToken memory contractObj,
-        address userAddress
+        AccessToken memory _contractObj,
+        address _userAddress
     ) internal view returns (bool) {
-        return balanceOf(contractObj, userAddress);
+        return balanceOf(_contractObj, _userAddress);
     }
 
+    /**
+    * @dev handleERC20Access(): handles the call to the main logic of validating an address' access in an accessToken.
+    * See checkAccess() function for usage
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    **/
     function handleERC20Access(
-        AccessToken memory contractObj,
-        address userAddress
+        AccessToken memory _contractObj,
+        address _userAddress
     ) internal view returns (bool) {
-        return balanceOf(contractObj, userAddress);
+        return balanceOf(_contractObj, _userAddress);
     }
 
-    function balanceOf(AccessToken memory _contractObj, address userAddress)
+    /**
+    * @dev balanceOf(): handles the main logic of validating an address' access in an accessToken.
+    * See handleERC20Access() / handleERC1155Access() / handleERC721Access() functions for usage
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    **/
+    function balanceOf(AccessToken memory _contractObj, address _userAddress)
         public
         view
         returns (bool)
@@ -237,7 +263,7 @@ contract TokenGate is AccessControl, Initializable {
         /** ERC721 Token */
         if (_contractObj.typeOfToken == ERC_721)
             return
-                IERC721(_contractObj.contractAddress).balanceOf(userAddress) >=
+                IERC721(_contractObj.contractAddress).balanceOf(_userAddress) >=
                     _contractObj.amount
                     ? true
                     : false;
@@ -245,7 +271,7 @@ contract TokenGate is AccessControl, Initializable {
         else if (_contractObj.typeOfToken == ERC_1155)
             return
                 IERC1155(_contractObj.contractAddress).balanceOf(
-                    userAddress,
+                    _userAddress,
                     uint256(_contractObj.specifyId)
                 ) >= _contractObj.amount
                     ? true
@@ -253,7 +279,7 @@ contract TokenGate is AccessControl, Initializable {
         /** ERC20 Token */
         else if (_contractObj.typeOfToken == ERC_20)
             return
-                IERC20(_contractObj.contractAddress).balanceOf(userAddress) >=
+                IERC20(_contractObj.contractAddress).balanceOf(_userAddress) >=
                     _contractObj.amount
                     ? true
                     : false;
@@ -263,21 +289,21 @@ contract TokenGate is AccessControl, Initializable {
     function ownerOf(
         address _contractAddress,
         int256 id,
-        address userAddress
+        address _userAddress
     ) public view returns (bool) {
-        return IERC721(_contractAddress).ownerOf(uint256(id)) == userAddress;
+        return IERC721(_contractAddress).ownerOf(uint256(id)) == _userAddress;
     }
 
     function setFee(
-        address contractAddress,
+        address _contractAddress,
         uint256 _price,
         uint256 numOfDays
-    ) public onlyTokenAdmin(contractAddress) {
-        allAccessTokens[contractAddress].subscription = Subscription({
+    ) public onlyTokenAdmin(_contractAddress) {
+        allAccessTokens[_contractAddress].subscription = Subscription({
             price: _price,
             duration: numOfDays * 1 days
         });
-        emit SetFee(contractAddress, _price, numOfDays * 1 days);
+        emit SetFee(_contractAddress, _price, numOfDays * 1 days);
     }
 
     function subscribe(address _contractAddress) external payable {
