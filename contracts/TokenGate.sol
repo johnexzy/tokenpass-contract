@@ -176,6 +176,12 @@ contract TokenGate is AccessControl, Initializable {
         return false;
     }
 
+    /**
+    * @dev checkIfSubscribed(): checks if an address has an actibe subscription in an accessToken.
+    * the address doesn't need to have that accessToken (Fungible or Non-Fungible)
+    * @param _contractAddress: the accessToken to check
+    * @param userAddress: the address to validate
+    */
     function checkIfSubscribed(address _contractAddress, address userAddress)
         public
         view
