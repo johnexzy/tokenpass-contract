@@ -138,6 +138,12 @@ contract TokenGate is AccessControl, Initializable {
         );
     }
 
+    /**
+    * @dev checkAccess: checks if an address meets the requirement for access set by an accessToken moderator.
+    * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
+    * @param _contractAddress: the address of the accessToken that the function wants to check user's access in
+    * @param userAddress: the address that the function wants to validate 
+    */
     function checkAccess(address _contractAddress, address userAddress)
         public
         view
