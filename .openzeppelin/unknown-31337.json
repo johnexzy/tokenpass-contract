@@ -2,7 +2,7 @@
   "manifestVersion": "3.2",
   "admin": {
     "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "txHash": "0x4ebde1fa9034610be0bfd3408e41010784459162534b616703acec1148140e63"
+    "txHash": "0x0b762ec39bc67d248cf5c7380d2625d137f2cfdfd540bb1994389a88153bbac5"
   },
   "proxies": [
     {
@@ -37,14 +37,14 @@
     },
     {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x4166062573931eb48fdbc65fdcad6d480ac19751c83cd6862060122dfdbfa8e9",
+      "txHash": "0x2eb49259fdc1aa6fb788cea97d0c156fdb9335870748c1130b0ec6de002573b8",
       "kind": "transparent"
     }
   ],
   "impls": {
     "a17f64e31bc549452dac592cdd28e9fae5416e890d71e7858cf6501d1123b8da": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xddac8ed2a995052466bb66f1cb80530e3e02eea88fd8df64b2efecdd9ccc8de5",
+      "txHash": "0x75f4f841f2d4e52a1765e8d804a33be7a14b5e9d348af1f6827fbc0b38893005",
       "layout": {
         "storage": [
           {
@@ -137,24 +137,6 @@
             "label": "mapping(bytes32 => struct AccessControl.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_struct(AccessFee)4404_storage": {
-            "label": "struct TokenGate.AccessFee",
-            "members": [
-              {
-                "label": "price",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "duration",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              }
-            ],
-            "numberOfBytes": "64"
-          },
           "t_struct(AccessToken)4399_storage": {
             "label": "struct TokenGate.AccessToken",
             "members": [
@@ -177,8 +159,8 @@
                 "slot": "2"
               },
               {
-                "label": "subscriptionFee",
-                "type": "t_struct(AccessFee)4404_storage",
+                "label": "subscription",
+                "type": "t_struct(Subscription)4404_storage",
                 "offset": 0,
                 "slot": "3"
               },
@@ -232,6 +214,24 @@
               }
             ],
             "numberOfBytes": "96"
+          },
+          "t_struct(Subscription)4404_storage": {
+            "label": "struct TokenGate.Subscription",
+            "members": [
+              {
+                "label": "price",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "duration",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
           },
           "t_uint256": {
             "label": "uint256",

@@ -226,8 +226,6 @@ contract TokenGate is AccessControl, Initializable {
     * See checkAccess() function for usage
     * @param _contractObj: the address of the accessToken
     * @param _userAddress: the address to be validated
-    *
-    * 
     **/
     function handleERC1155Access(
         AccessToken memory _contractObj,
@@ -251,6 +249,13 @@ contract TokenGate is AccessControl, Initializable {
 
     /**
     * @dev balanceOf(): handles the main logic of validating an address' access in an accessToken.
+    *
+    * For each of ERC721, ERC1155 and ERC20, this function creates an instance of the standard using the accessToken's address
+    * the .typeOfToken attribute is used to determine which ERC standard the accessToken belongs to.
+    * 
+    * the balanceOf() functions in each of the ERC token standards callled on their instantiation differ in design and functionality.
+    * check out this Openzeppelin docs to understand more https://docs.openzeppelin.com/contracts/3.x/tokens#standards 
+    *
     * See handleERC20Access() / handleERC1155Access() / handleERC721Access() functions for usage
     * @param _contractObj: the address of the accessToken
     * @param _userAddress: the address to be validated
@@ -288,10 +293,10 @@ contract TokenGate is AccessControl, Initializable {
 
     function ownerOf(
         address _contractAddress,
-        int256 id,
+        int256 _id,
         address _userAddress
     ) public view returns (bool) {
-        return IERC721(_contractAddress).ownerOf(uint256(id)) == _userAddress;
+        return IERC721(_contractAddress).ownerOf(uint256(_id)) == _userAddress;
     }
 
     function setFee(
