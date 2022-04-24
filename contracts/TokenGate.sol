@@ -53,11 +53,11 @@ contract TokenGate is AccessControl, Initializable {
         address contractAddress; // contract address of the access token (ERC20, ERC721 or ERC1155)
         bytes32 typeOfToken; // "ERC20" or "ERC721" or "ERC1155" in bytes32
         int256 specifyId; // -1 if not needed. required for ERC1155 and optional for ERC721
-        AccessFee subscriptionFee; // set price for subscription
+        Subscription subscription; // set price and duration for subscription
         uint256 amount; //required
     }
 
-    struct AccessFee {
+    struct Subscription {
         uint256 price;
         uint256 duration;
     }
@@ -92,7 +92,7 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-     * Constructor. sets Role to DEFAULT_AMIN_ROLE
+     * Constructor. sets Role to DEFAULT_ADMIN_ROLE
      */
     function initialize() public initializer {
         _setupRole(ADMIN_ROLE, msg.sender);
@@ -101,6 +101,12 @@ contract TokenGate is AccessControl, Initializable {
         emit Initialized(msg.sender);
     }
 
+    /**
+    * @dev initializeAccessToken: to suplly the contract with the info about the token contract to be used for gating access
+    * @param _accessToken: of datatype AccessToken to be passed as an array of values.
+    * the third value of the argument array: typeOfToken ("ERC20" or "ERC721" or "ERC1155" ) must be a byte value of the string, 
+    * the utility function stringToBytes32() can be used to convert to bytes
+    */
     function initializeAccessToken(AccessToken memory _accessToken)
         public
         onlyRole(TOKEN_MODERATORS)
@@ -127,11 +133,17 @@ contract TokenGate is AccessControl, Initializable {
             _accessToken.typeOfToken,
             _accessToken.specifyId,
             _accessToken.amount,
-            _accessToken.subscriptionFee.price,
-            _accessToken.subscriptionFee.duration
+            _accessToken.subscription.price,
+            _accessToken.subscription.duration
         );
     }
 
+    /**
+    * @dev checkAccess: checks if an address meets the requirement for access set by an accessToken moderator.
+    * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
+    * @param _contractAddress: the address of the accessToken that the function wants to check user's access in
+    * @param userAddress: the address that the function wants to validate 
+    */
     function checkAccess(address _contractAddress, address userAddress)
         public
         view
@@ -255,7 +267,7 @@ contract TokenGate is AccessControl, Initializable {
         uint256 _price,
         uint256 numOfDays
     ) public onlyTokenAdmin(contractAddress) {
-        allAccessTokens[contractAddress].subscriptionFee = AccessFee({
+        allAccessTokens[contractAddress].subscription = Subscription({
             price: _price,
             duration: numOfDays * 1 days
         });
@@ -265,7 +277,7 @@ contract TokenGate is AccessControl, Initializable {
     function subscribe(address _contractAddress) external payable {
         require(
             msg.value >=
-                allAccessTokens[_contractAddress].subscriptionFee.price,
+                allAccessTokens[_contractAddress].subscription.price,
             "Ether value sent is not correct"
         );
 
@@ -273,7 +285,7 @@ contract TokenGate is AccessControl, Initializable {
             subscriberAddress: msg.sender,
             dateOfSubscription: block.timestamp,
             dateOfExpiration: block.timestamp +
-                allAccessTokens[_contractAddress].subscriptionFee.duration
+                allAccessTokens[_contractAddress].subscription.duration
         });
 
         emit Subscribed(
@@ -290,8 +302,8 @@ contract TokenGate is AccessControl, Initializable {
         returns (uint256 price, uint256 duration)
     {
         (price, duration) = (
-            allAccessTokens[_contractAddress].subscriptionFee.price,
-            allAccessTokens[_contractAddress].subscriptionFee.duration
+            allAccessTokens[_contractAddress].subscription.price,
+            allAccessTokens[_contractAddress].subscription.duration
         );
     }
 
