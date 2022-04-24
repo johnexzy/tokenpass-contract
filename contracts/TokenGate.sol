@@ -53,11 +53,11 @@ contract TokenGate is AccessControl, Initializable {
         address contractAddress; // contract address of the access token (ERC20, ERC721 or ERC1155)
         bytes32 typeOfToken; // "ERC20" or "ERC721" or "ERC1155" in bytes32
         int256 specifyId; // -1 if not needed. required for ERC1155 and optional for ERC721
-        AccessFee subscriptionFee; // set price for subscription
+        Subscription subscription; // set price and duration for subscription
         uint256 amount; //required
     }
 
-    struct AccessFee {
+    struct Subscription {
         uint256 price;
         uint256 duration;
     }
@@ -133,8 +133,8 @@ contract TokenGate is AccessControl, Initializable {
             _accessToken.typeOfToken,
             _accessToken.specifyId,
             _accessToken.amount,
-            _accessToken.subscriptionFee.price,
-            _accessToken.subscriptionFee.duration
+            _accessToken.subscription.price,
+            _accessToken.subscription.duration
         );
     }
 
@@ -261,7 +261,7 @@ contract TokenGate is AccessControl, Initializable {
         uint256 _price,
         uint256 numOfDays
     ) public onlyTokenAdmin(contractAddress) {
-        allAccessTokens[contractAddress].subscriptionFee = AccessFee({
+        allAccessTokens[contractAddress].subscription = Subscription({
             price: _price,
             duration: numOfDays * 1 days
         });
@@ -271,7 +271,7 @@ contract TokenGate is AccessControl, Initializable {
     function subscribe(address _contractAddress) external payable {
         require(
             msg.value >=
-                allAccessTokens[_contractAddress].subscriptionFee.price,
+                allAccessTokens[_contractAddress].subscription.price,
             "Ether value sent is not correct"
         );
 
@@ -279,7 +279,7 @@ contract TokenGate is AccessControl, Initializable {
             subscriberAddress: msg.sender,
             dateOfSubscription: block.timestamp,
             dateOfExpiration: block.timestamp +
-                allAccessTokens[_contractAddress].subscriptionFee.duration
+                allAccessTokens[_contractAddress].subscription.duration
         });
 
         emit Subscribed(
@@ -296,8 +296,8 @@ contract TokenGate is AccessControl, Initializable {
         returns (uint256 price, uint256 duration)
     {
         (price, duration) = (
-            allAccessTokens[_contractAddress].subscriptionFee.price,
-            allAccessTokens[_contractAddress].subscriptionFee.duration
+            allAccessTokens[_contractAddress].subscription.price,
+            allAccessTokens[_contractAddress].subscription.duration
         );
     }
 
