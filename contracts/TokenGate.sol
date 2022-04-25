@@ -43,11 +43,18 @@ contract TokenGate is AccessControl, Initializable {
         uint256 indexed dateOfSubscription,
         uint256 dateOfExpiration
     );
-    event DisableTokenAccess(address indexed contractAddress);
-    event WithdrawBalance(uint256 amount, address indexed caller);
+    event DisableTokenAccess(
+        address indexed contractAddress,
+        address indexed caller
+    );
+    event WithdrawBalancePaidForToken(
+        address indexed tokenAdress,
+        uint256 indexed amount,
+        address indexed caller
+    );
     /**
      * The schema used in initislizing Access Tokens
-     * `lifetime`
+     *
      */
     struct AccessToken {
         address contractAddress; // contract address of the access token (ERC20, ERC721 or ERC1155)
@@ -84,6 +91,7 @@ contract TokenGate is AccessControl, Initializable {
     mapping(address => mapping(address => Subscriber)) public allSubscribers;
     mapping(address => AccessToken) private allAccessTokens;
     mapping(address => address) public tokenAdmins;
+    mapping(address => uint256) public ethBalanceForToken;
 
     // MODIFIER
     modifier onlyTokenAdmin(address contractAddress) {
@@ -102,11 +110,11 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-    * @dev initializeAccessToken: to suplly the contract with the info about the token contract to be used for gating access
-    * @param _accessToken: of datatype AccessToken to be passed as an array of values.
-    * the third value of the argument array: typeOfToken ("ERC20" or "ERC721" or "ERC1155" ) must be a byte value of the string, 
-    * the utility function stringToBytes32() can be used to convert to bytes
-    */
+     * @dev initializeAccessToken: to suplly the contract with the info about the token contract to be used for gating access
+     * @param _accessToken: of datatype AccessToken to be passed as an array of values.
+     * the third value of the argument array: typeOfToken ("ERC20" or "ERC721" or "ERC1155" ) must be a byte value of the string,
+     * the utility function stringToBytes32() can be used to convert to bytes
+     */
     function initializeAccessToken(AccessToken memory _accessToken)
         public
         onlyRole(TOKEN_MODERATORS)
@@ -139,18 +147,18 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-    * @dev checkAccess: checks if an address meets the requirement for access set by an accessToken moderator.
-    * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
-    * @param _contractAddress: the address of the accessToken that the function wants to check user's access in
-    * @param _userAddress: the address that the function wants to validate 
-    */
+     * @dev checkAccess: checks if an address meets the requirement for access set by an accessToken moderator.
+     * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
+     * @param _contractAddress: the address of the accessToken that the function wants to check user's access in
+     * @param _userAddress: the address that the function wants to validate
+     */
     function checkAccess(address _contractAddress, address _userAddress)
         public
         view
         returns (bool)
     {
-        if (checkIfSubscribed(_contractAddress, _userAddress)) return true;
-        if (allAccessTokens[_contractAddress].contractAddress != address(0))
+        if (allAccessTokens[_contractAddress].contractAddress != address(0)) {
+            if (checkIfSubscribed(_contractAddress, _userAddress)) return true;
             if (
                 allAccessTokens[_contractAddress].typeOfToken == ERC_721 &&
                 handleERC721Access(
@@ -172,16 +180,16 @@ contract TokenGate is AccessControl, Initializable {
                     _userAddress
                 )
             ) return true;
-
+        }
         return false;
     }
 
     /**
-    * @dev checkIfSubscribed(): checks if an address has an actibe subscription in an accessToken.
-    * the address doesn't need to have that accessToken (Fungible or Non-Fungible)
-    * @param _contractAddress: the accessToken to check
-    * @param _userAddress: the address to validate
-    */
+     * @dev checkIfSubscribed(): checks if an address has an actibe subscription in an accessToken.
+     * the address doesn't need to have that accessToken (Fungible or Non-Fungible)
+     * @param _contractAddress: the accessToken to check
+     * @param _userAddress: the address to validate
+     */
     function checkIfSubscribed(address _contractAddress, address _userAddress)
         public
         view
@@ -192,19 +200,19 @@ contract TokenGate is AccessControl, Initializable {
             address(0)
         )
             if (
-                allSubscribers[_contractAddress][_userAddress].dateOfExpiration >
-                block.timestamp
+                allSubscribers[_contractAddress][_userAddress]
+                    .dateOfExpiration > block.timestamp
             ) return true;
             else return false;
         return false;
     }
 
     /**
-    * @dev handleERC721Access(): handles the call to the  main logic of validating an address' access in an accessToken.
-    * See checkAccess() function for usage
-    * @param _contractObj: the address of the accessToken
-    * @param _userAddress: the address to be validated
-    **/
+     * @dev handleERC721Access(): handles the call to the  main logic of validating an address' access in an accessToken.
+     * See checkAccess() function for usage
+     * @param _contractObj: the address of the accessToken
+     * @param _userAddress: the address to be validated
+     **/
     function handleERC721Access(
         AccessToken memory _contractObj,
         address _userAddress
@@ -222,11 +230,11 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-    * @dev handleERC1155Access(): handles the call to the  main logic of validating an address' access in an accessToken.
-    * See checkAccess() function for usage
-    * @param _contractObj: the address of the accessToken
-    * @param _userAddress: the address to be validated
-    **/
+     * @dev handleERC1155Access(): handles the call to the  main logic of validating an address' access in an accessToken.
+     * See checkAccess() function for usage
+     * @param _contractObj: the address of the accessToken
+     * @param _userAddress: the address to be validated
+     **/
     function handleERC1155Access(
         AccessToken memory _contractObj,
         address _userAddress
@@ -235,11 +243,11 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-    * @dev handleERC20Access(): handles the call to the main logic of validating an address' access in an accessToken.
-    * See checkAccess() function for usage
-    * @param _contractObj: the address of the accessToken
-    * @param _userAddress: the address to be validated
-    **/
+     * @dev handleERC20Access(): handles the call to the main logic of validating an address' access in an accessToken.
+     * See checkAccess() function for usage
+     * @param _contractObj: the address of the accessToken
+     * @param _userAddress: the address to be validated
+     **/
     function handleERC20Access(
         AccessToken memory _contractObj,
         address _userAddress
@@ -248,19 +256,19 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-    * @dev balanceOf(): handles the main logic of validating an address' access in an accessToken.
-    *
-    * For each of ERC721, ERC1155 and ERC20, this function creates an instance of the standard using the accessToken's address
-    * the .typeOfToken attribute is used to determine which ERC standard the accessToken belongs to.
-    * 
-    * the balanceOf() functions in each of the ERC token standards callled on their instantiation differ in design and functionality.
-    * check out this Openzeppelin docs to understand more https://docs.openzeppelin.com/contracts/3.x/tokens#standards 
-    *
-    * See handleERC20Access() / handleERC1155Access() / handleERC721Access() functions for usage
-    *
-    * @param _contractObj: the address of the accessToken
-    * @param _userAddress: the address to be validated
-    **/
+     * @dev balanceOf(): handles the main logic of validating an address' access in an accessToken.
+     *
+     * For each of ERC721, ERC1155 and ERC20, this function creates an instance of the standard using the accessToken's address
+     * the .typeOfToken attribute is used to determine which ERC standard the accessToken belongs to.
+     *
+     * the balanceOf() functions in each of the ERC token standards callled on their instantiation differ in design and functionality.
+     * check out this Openzeppelin docs to understand more https://docs.openzeppelin.com/contracts/3.x/tokens#standards
+     *
+     * See handleERC20Access() / handleERC1155Access() / handleERC721Access() functions for usage
+     *
+     * @param _contractObj: the address of the accessToken
+     * @param _userAddress: the address to be validated
+     **/
     function balanceOf(AccessToken memory _contractObj, address _userAddress)
         public
         view
@@ -293,13 +301,13 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-    * @dev ownerOf(): calls ERC721 ownerOf() function which returns the address that owns a token,
-    * this function then compares the address returned to the _userAddress and returns true if matched, else returns false.
-    *
-    * @param _contractAddress: address of the ERC721 accessToken
-    * @param _id: ID of the NFT to get the owner of
-    * @param _userAddress: the address to compare
-    **/
+     * @dev ownerOf(): calls ERC721 ownerOf() function which returns the address that owns a token,
+     * this function then compares the address returned to the _userAddress and returns true if matched, else returns false.
+     *
+     * @param _contractAddress: address of the ERC721 accessToken
+     * @param _id: ID of the NFT to get the owner of
+     * @param _userAddress: the address to compare
+     **/
     function ownerOf(
         address _contractAddress,
         int256 _id,
@@ -313,6 +321,11 @@ contract TokenGate is AccessControl, Initializable {
         uint256 _price,
         uint256 _numOfDays
     ) public onlyTokenAdmin(_contractAddress) {
+        require(
+            allAccessTokens[_contractAddress].contractAddress ==
+                _contractAddress,
+            "Token disabled or doesn't exist"
+        );
         allAccessTokens[_contractAddress].subscription = Subscription({
             price: _price,
             duration: _numOfDays * 1 days
@@ -321,15 +334,19 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     /**
-    * @dev subscribe(): subscribes an address to an accessToken for a duration specified by the acccessToken's moderator,
-    * subscribed accounts will have all access to the accessTokens services as an account that has the accessToken (Fungible or Non-Fungible)
-    *
-    * @param _contractAddress: the accessToken's contract address
-    **/
+     * @dev subscribe(): subscribes an address to an accessToken for a duration specified by the acccessToken's moderator,
+     * subscribed accounts will have all access to the accessTokens services as an account that has the accessToken (Fungible or Non-Fungible)
+     *
+     * @param _contractAddress: the accessToken's contract address
+     **/
     function subscribe(address _contractAddress) external payable {
         require(
-            msg.value >=
-                allAccessTokens[_contractAddress].subscription.price,
+            allAccessTokens[_contractAddress].contractAddress ==
+                _contractAddress,
+            "Token disabled or doesn't exist"
+        );
+        require(
+            msg.value == allAccessTokens[_contractAddress].subscription.price,
             "Ether value sent is not correct"
         );
 
@@ -339,6 +356,8 @@ contract TokenGate is AccessControl, Initializable {
             dateOfExpiration: block.timestamp +
                 allAccessTokens[_contractAddress].subscription.duration
         });
+
+        ethBalanceForToken[_contractAddress] += msg.value;
 
         emit Subscribed(
             msg.sender,
@@ -361,14 +380,14 @@ contract TokenGate is AccessControl, Initializable {
 
     function disableTokenAccess(address _contractAddress)
         public
-        onlyRole(ADMIN_ROLE)
+        onlyTokenAdmin(_contractAddress)
     {
         require(
             allAccessTokens[_contractAddress].contractAddress != address(0),
             "Token does not exist"
         );
         delete allAccessTokens[_contractAddress];
-        emit DisableTokenAccess(_contractAddress);
+        emit DisableTokenAccess(_contractAddress, msg.sender);
     }
 
     /** UTILITY FUNCTION **/
@@ -387,9 +406,26 @@ contract TokenGate is AccessControl, Initializable {
         }
     }
 
-    function withrawETH() public onlyRole(ADMIN_ROLE) {
-        uint256 balance = address(this).balance;
-        AddressUpgradeable.sendValue(payable(msg.sender), balance);
-        emit WithdrawBalance(balance, msg.sender);
+    function ethBalancePaidForTokenAccess(address _contractAddress)
+        public
+        view
+        returns (uint256)
+    {
+        return ethBalanceForToken[_contractAddress];
+    }
+
+    function withdrawBalancePaidForToken(address _contractAddress)
+        public
+        onlyTokenAdmin(_contractAddress)
+    {
+        require(ethBalanceForToken[_contractAddress] > 0, "Value too low");
+        uint256 ethBalance = ethBalanceForToken[_contractAddress];
+        ethBalanceForToken[_contractAddress] = 0;
+        AddressUpgradeable.sendValue(payable(msg.sender), ethBalance);
+        emit WithdrawBalancePaidForToken(
+            _contractAddress,
+            ethBalance,
+            msg.sender
+        );
     }
 }
