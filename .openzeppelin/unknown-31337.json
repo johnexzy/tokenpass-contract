@@ -44,7 +44,7 @@
   "impls": {
     "a17f64e31bc549452dac592cdd28e9fae5416e890d71e7858cf6501d1123b8da": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xddac8ed2a995052466bb66f1cb80530e3e02eea88fd8df64b2efecdd9ccc8de5",
+      "txHash": "0x68219640a9f03795ebea002749c03f5854b1578c0756ec52cd251c575bce70c0",
       "layout": {
         "storage": [
           {
@@ -137,24 +137,6 @@
             "label": "mapping(bytes32 => struct AccessControl.RoleData)",
             "numberOfBytes": "32"
           },
-          "t_struct(AccessFee)4404_storage": {
-            "label": "struct TokenGate.AccessFee",
-            "members": [
-              {
-                "label": "price",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "duration",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              }
-            ],
-            "numberOfBytes": "64"
-          },
           "t_struct(AccessToken)4399_storage": {
             "label": "struct TokenGate.AccessToken",
             "members": [
@@ -177,8 +159,8 @@
                 "slot": "2"
               },
               {
-                "label": "subscriptionFee",
-                "type": "t_struct(AccessFee)4404_storage",
+                "label": "subscription",
+                "type": "t_struct(Subscription)4404_storage",
                 "offset": 0,
                 "slot": "3"
               },
@@ -232,6 +214,24 @@
               }
             ],
             "numberOfBytes": "96"
+          },
+          "t_struct(Subscription)4404_storage": {
+            "label": "struct TokenGate.Subscription",
+            "members": [
+              {
+                "label": "price",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "duration",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
           },
           "t_uint256": {
             "label": "uint256",
