@@ -142,88 +142,126 @@ contract TokenGate is AccessControl, Initializable {
     * @dev checkAccess: checks if an address meets the requirement for access set by an accessToken moderator.
     * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
     * @param _contractAddress: the address of the accessToken that the function wants to check user's access in
-    * @param userAddress: the address that the function wants to validate 
+    * @param _userAddress: the address that the function wants to validate 
     */
-    function checkAccess(address _contractAddress, address userAddress)
+    function checkAccess(address _contractAddress, address _userAddress)
         public
         view
         returns (bool)
     {
-        if (checkIfSubscribed(_contractAddress, userAddress)) return true;
+        if (checkIfSubscribed(_contractAddress, _userAddress)) return true;
         if (allAccessTokens[_contractAddress].contractAddress != address(0))
             if (
                 allAccessTokens[_contractAddress].typeOfToken == ERC_721 &&
                 handleERC721Access(
                     allAccessTokens[_contractAddress],
-                    userAddress
+                    _userAddress
                 )
             ) return true;
             else if (
                 allAccessTokens[_contractAddress].typeOfToken == ERC_1155 &&
                 handleERC1155Access(
                     allAccessTokens[_contractAddress],
-                    userAddress
+                    _userAddress
                 )
             ) return true;
             else if (
                 allAccessTokens[_contractAddress].typeOfToken == ERC_20 &&
                 handleERC20Access(
                     allAccessTokens[_contractAddress],
-                    userAddress
+                    _userAddress
                 )
             ) return true;
 
         return false;
     }
 
-    function checkIfSubscribed(address _contractAddress, address userAddress)
+    /**
+    * @dev checkIfSubscribed(): checks if an address has an actibe subscription in an accessToken.
+    * the address doesn't need to have that accessToken (Fungible or Non-Fungible)
+    * @param _contractAddress: the accessToken to check
+    * @param _userAddress: the address to validate
+    */
+    function checkIfSubscribed(address _contractAddress, address _userAddress)
         public
         view
         returns (bool)
     {
         if (
-            allSubscribers[_contractAddress][userAddress].subscriberAddress !=
+            allSubscribers[_contractAddress][_userAddress].subscriberAddress !=
             address(0)
         )
             if (
-                allSubscribers[_contractAddress][userAddress].dateOfExpiration >
+                allSubscribers[_contractAddress][_userAddress].dateOfExpiration >
                 block.timestamp
             ) return true;
             else return false;
         return false;
     }
 
+    /**
+    * @dev handleERC721Access(): handles the call to the  main logic of validating an address' access in an accessToken.
+    * See checkAccess() function for usage
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    **/
     function handleERC721Access(
-        AccessToken memory contractObj,
-        address userAddress
+        AccessToken memory _contractObj,
+        address _userAddress
     ) internal view returns (bool) {
-        if (contractObj.specifyId == -1)
-            return balanceOf(contractObj, userAddress);
-        if (contractObj.specifyId != -1)
+        if (_contractObj.specifyId == -1)
+            return balanceOf(_contractObj, _userAddress);
+        if (_contractObj.specifyId != -1)
             return
                 ownerOf(
-                    contractObj.contractAddress,
-                    contractObj.specifyId,
-                    userAddress
+                    _contractObj.contractAddress,
+                    _contractObj.specifyId,
+                    _userAddress
                 );
         return false;
     }
 
+    /**
+    * @dev handleERC1155Access(): handles the call to the  main logic of validating an address' access in an accessToken.
+    * See checkAccess() function for usage
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    **/
     function handleERC1155Access(
-        AccessToken memory contractObj,
-        address userAddress
+        AccessToken memory _contractObj,
+        address _userAddress
     ) internal view returns (bool) {
-        return balanceOf(contractObj, userAddress);
+        return balanceOf(_contractObj, _userAddress);
     }
 
+    /**
+    * @dev handleERC20Access(): handles the call to the main logic of validating an address' access in an accessToken.
+    * See checkAccess() function for usage
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    **/
     function handleERC20Access(
-        AccessToken memory contractObj,
-        address userAddress
+        AccessToken memory _contractObj,
+        address _userAddress
     ) internal view returns (bool) {
-        return balanceOf(contractObj, userAddress);
+        return balanceOf(_contractObj, _userAddress);
     }
 
-    function balanceOf(AccessToken memory _contractObj, address userAddress)
+    /**
+    * @dev balanceOf(): handles the main logic of validating an address' access in an accessToken.
+    *
+    * For each of ERC721, ERC1155 and ERC20, this function creates an instance of the standard using the accessToken's address
+    * the .typeOfToken attribute is used to determine which ERC standard the accessToken belongs to.
+    * 
+    * the balanceOf() functions in each of the ERC token standards callled on their instantiation differ in design and functionality.
+    * check out this Openzeppelin docs to understand more https://docs.openzeppelin.com/contracts/3.x/tokens#standards 
+    *
+    * See handleERC20Access() / handleERC1155Access() / handleERC721Access() functions for usage
+    *
+    * @param _contractObj: the address of the accessToken
+    * @param _userAddress: the address to be validated
+    **/
+    function balanceOf(AccessToken memory _contractObj, address _userAddress)
         public
         view
         returns (bool)
@@ -231,7 +269,7 @@ contract TokenGate is AccessControl, Initializable {
         /** ERC721 Token */
         if (_contractObj.typeOfToken == ERC_721)
             return
-                IERC721(_contractObj.contractAddress).balanceOf(userAddress) >=
+                IERC721(_contractObj.contractAddress).balanceOf(_userAddress) >=
                     _contractObj.amount
                     ? true
                     : false;
@@ -239,7 +277,7 @@ contract TokenGate is AccessControl, Initializable {
         else if (_contractObj.typeOfToken == ERC_1155)
             return
                 IERC1155(_contractObj.contractAddress).balanceOf(
-                    userAddress,
+                    _userAddress,
                     uint256(_contractObj.specifyId)
                 ) >= _contractObj.amount
                     ? true
@@ -247,33 +285,47 @@ contract TokenGate is AccessControl, Initializable {
         /** ERC20 Token */
         else if (_contractObj.typeOfToken == ERC_20)
             return
-                IERC20(_contractObj.contractAddress).balanceOf(userAddress) >=
+                IERC20(_contractObj.contractAddress).balanceOf(_userAddress) >=
                     _contractObj.amount
                     ? true
                     : false;
         return false;
     }
 
+    /**
+    * @dev ownerOf(): calls ERC721 ownerOf() function which returns the address that owns a token,
+    * this function then compares the address returned to the _userAddress and returns true if matched, else returns false.
+    *
+    * @param _contractAddress: address of the ERC721 accessToken
+    * @param _id: ID of the NFT to get the owner of
+    * @param _userAddress: the address to compare
+    **/
     function ownerOf(
         address _contractAddress,
-        int256 id,
-        address userAddress
+        int256 _id,
+        address _userAddress
     ) public view returns (bool) {
-        return IERC721(_contractAddress).ownerOf(uint256(id)) == userAddress;
+        return IERC721(_contractAddress).ownerOf(uint256(_id)) == _userAddress;
     }
 
     function setFee(
-        address contractAddress,
+        address _contractAddress,
         uint256 _price,
-        uint256 numOfDays
-    ) public onlyTokenAdmin(contractAddress) {
-        allAccessTokens[contractAddress].subscription = Subscription({
+        uint256 _numOfDays
+    ) public onlyTokenAdmin(_contractAddress) {
+        allAccessTokens[_contractAddress].subscription = Subscription({
             price: _price,
-            duration: numOfDays * 1 days
+            duration: _numOfDays * 1 days
         });
-        emit SetFee(contractAddress, _price, numOfDays * 1 days);
+        emit SetFee(_contractAddress, _price, _numOfDays * 1 days);
     }
 
+    /**
+    * @dev subscribe(): subscribes an address to an accessToken for a duration specified by the acccessToken's moderator,
+    * subscribed accounts will have all access to the accessTokens services as an account that has the accessToken (Fungible or Non-Fungible)
+    *
+    * @param _contractAddress: the accessToken's contract address
+    **/
     function subscribe(address _contractAddress) external payable {
         require(
             msg.value >=
