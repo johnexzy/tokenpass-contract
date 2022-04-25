@@ -257,6 +257,7 @@ contract TokenGate is AccessControl, Initializable {
     * check out this Openzeppelin docs to understand more https://docs.openzeppelin.com/contracts/3.x/tokens#standards 
     *
     * See handleERC20Access() / handleERC1155Access() / handleERC721Access() functions for usage
+    *
     * @param _contractObj: the address of the accessToken
     * @param _userAddress: the address to be validated
     **/
@@ -291,6 +292,14 @@ contract TokenGate is AccessControl, Initializable {
         return false;
     }
 
+    /**
+    * @dev ownerOf(): calls ERC721 ownerOf() function which returns the address that owns a token,
+    * this function then compares the address returned to the _userAddress and returns true if matched, else returns false.
+    *
+    * @param _contractAddress: address of the ERC721 accessToken
+    * @param _id: ID of the NFT to get the owner of
+    * @param _userAddress: the address to compare
+    **/
     function ownerOf(
         address _contractAddress,
         int256 _id,
@@ -302,15 +311,21 @@ contract TokenGate is AccessControl, Initializable {
     function setFee(
         address _contractAddress,
         uint256 _price,
-        uint256 numOfDays
+        uint256 _numOfDays
     ) public onlyTokenAdmin(_contractAddress) {
         allAccessTokens[_contractAddress].subscription = Subscription({
             price: _price,
-            duration: numOfDays * 1 days
+            duration: _numOfDays * 1 days
         });
-        emit SetFee(_contractAddress, _price, numOfDays * 1 days);
+        emit SetFee(_contractAddress, _price, _numOfDays * 1 days);
     }
 
+    /**
+    * @dev subscribe(): subscribes an address to an accessToken for a duration specified by the acccessToken's moderator,
+    * subscribed accounts will have all access to the accessTokens services as an account that has the accessToken (Fungible or Non-Fungible)
+    *
+    * @param _contractAddress: the accessToken's contract address
+    **/
     function subscribe(address _contractAddress) external payable {
         require(
             msg.value >=
