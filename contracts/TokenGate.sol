@@ -378,6 +378,11 @@ contract TokenGate is AccessControl, Initializable {
         );
     }
 
+
+    /**
+    * TODO: Review: an issue raised about this. check link below
+    * https://github.com/AfroApes/subscription-contract/issues/10#issue-1214532706
+    **/  
     function disableTokenAccess(address _contractAddress)
         public
         onlyTokenAdmin(_contractAddress)
