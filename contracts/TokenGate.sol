@@ -32,8 +32,9 @@ contract TokenGate is AccessControl, Initializable {
         uint256 price,
         uint256 duration
     );
-    event SetFee(
+    event SetSubscription(
         address contractAddress,
+        bool indexed isSubscribable,
         uint256 indexed price,
         uint256 indexed duration
     );
@@ -65,6 +66,7 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     struct Subscription {
+        bool isSubscribable;
         uint256 price;
         uint256 duration;
     }
@@ -316,10 +318,11 @@ contract TokenGate is AccessControl, Initializable {
         return IERC721(_contractAddress).ownerOf(uint256(_id)) == _userAddress;
     }
 
-    function setFee(
+    function setSubscription(
         address _contractAddress,
         uint256 _price,
-        uint256 _numOfDays
+        uint256 _numOfDays,
+        bool _isSubscribable
     ) public onlyTokenAdmin(_contractAddress) {
         require(
             allAccessTokens[_contractAddress].contractAddress ==
@@ -327,10 +330,11 @@ contract TokenGate is AccessControl, Initializable {
             "Token disabled or doesn't exist"
         );
         allAccessTokens[_contractAddress].subscription = Subscription({
+            isSubscribable: _isSubscribable,
             price: _price,
             duration: _numOfDays * 1 days
         });
-        emit SetFee(_contractAddress, _price, _numOfDays * 1 days);
+        emit SetSubscription(_contractAddress, _isSubscribable, _price, _numOfDays * 1 days);
     }
 
     /**
@@ -345,6 +349,7 @@ contract TokenGate is AccessControl, Initializable {
                 _contractAddress,
             "Token disabled or doesn't exist"
         );
+        require(allAccessTokens[_contractAddress].subscription.isSubscribable, "Subscription to this Access Token is Deactivated");
         require(
             msg.value == allAccessTokens[_contractAddress].subscription.price,
             "Ether value sent is not correct"
@@ -367,17 +372,23 @@ contract TokenGate is AccessControl, Initializable {
         );
     }
 
-    function getFeeForTokenAccess(address _contractAddress)
+    function getSubscriptionDetailsForTokenAccess(address _contractAddress)
         public
         view
-        returns (uint256 price, uint256 duration)
+        returns (bool isSubscribable, uint256 price, uint256 duration)
     {
-        (price, duration) = (
+        (isSubscribable, price, duration) = (
+            allAccessTokens[_contractAddress].subscription.isSubscribable,
             allAccessTokens[_contractAddress].subscription.price,
             allAccessTokens[_contractAddress].subscription.duration
         );
     }
 
+
+    /**
+    * TODO: Review: an issue raised about this. check link below
+    * https://github.com/AfroApes/subscription-contract/issues/10#issue-1214532706
+    **/  
     function disableTokenAccess(address _contractAddress)
         public
         onlyTokenAdmin(_contractAddress)
