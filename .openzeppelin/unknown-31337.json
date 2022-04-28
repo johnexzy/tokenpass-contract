@@ -2,7 +2,7 @@
   "manifestVersion": "3.2",
   "admin": {
     "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "txHash": "0x522c50da559f39effff89c0d7615ec0ccca4e8aad9670c0f30444c223d3e6fe1"
+    "txHash": "0x5a87d9ce4e0e029fe83224ce987c5b05679da7c4180e73b4e74e5e5c300bfa0b"
   },
   "proxies": [
     {
@@ -37,14 +37,14 @@
     },
     {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x2b762a6e0dd1b912494061de83a0157912b812deaec8721a81a4a99babf22f17",
+      "txHash": "0xac922f730dcb6d2a0369f2895bfe9c788ce64f77025dbccfcd3750334a2345bb",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "fceb663b069f762ce1f34fc9a44520799b2e8ec0e46a6588a5110f394efeaff9": {
+    "5a4b7dc8701510b85a37fcd4f3a60a320b945dcb41cb27ab1ddaa5914533a64b": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0x8b4b6f76816927e90e6e0e05f9850ee881cf0c361131c8abdbe5a72395d6e7d2",
+      "txHash": "0x01cbe58e002038ed95e415b479a5b6169e34a7fd8f2a0b41718c241501dfd12d",
       "layout": {
         "storage": [
           {
@@ -75,9 +75,9 @@
             "label": "allSubscribers",
             "offset": 0,
             "slot": "2",
-            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Subscriber)4415_storage))",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Subscriber)4417_storage))",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:91"
+            "src": "contracts/TokenGate.sol:92"
           },
           {
             "label": "allAccessTokens",
@@ -85,7 +85,7 @@
             "slot": "3",
             "type": "t_mapping(t_address,t_struct(AccessToken)4403_storage)",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:92"
+            "src": "contracts/TokenGate.sol:93"
           },
           {
             "label": "tokenAdmins",
@@ -93,7 +93,7 @@
             "slot": "4",
             "type": "t_mapping(t_address,t_address)",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:93"
+            "src": "contracts/TokenGate.sol:94"
           },
           {
             "label": "ethBalanceForToken",
@@ -101,7 +101,7 @@
             "slot": "5",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:94"
+            "src": "contracts/TokenGate.sol:95"
           }
         ],
         "types": {
@@ -129,7 +129,7 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_address,t_struct(Subscriber)4415_storage))": {
+          "t_mapping(t_address,t_mapping(t_address,t_struct(Subscriber)4417_storage))": {
             "label": "mapping(address => mapping(address => struct TokenGate.Subscriber))",
             "numberOfBytes": "32"
           },
@@ -137,7 +137,7 @@
             "label": "mapping(address => struct TokenGate.AccessToken)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(Subscriber)4415_storage)": {
+          "t_mapping(t_address,t_struct(Subscriber)4417_storage)": {
             "label": "mapping(address => struct TokenGate.Subscriber)",
             "numberOfBytes": "32"
           },
@@ -172,7 +172,7 @@
               },
               {
                 "label": "subscription",
-                "type": "t_struct(Subscription)4408_storage",
+                "type": "t_struct(Subscription)4410_storage",
                 "offset": 0,
                 "slot": "3"
               },
@@ -180,10 +180,10 @@
                 "label": "amount",
                 "type": "t_uint256",
                 "offset": 0,
-                "slot": "5"
+                "slot": "6"
               }
             ],
-            "numberOfBytes": "192"
+            "numberOfBytes": "224"
           },
           "t_struct(RoleData)336_storage": {
             "label": "struct AccessControl.RoleData",
@@ -203,7 +203,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Subscriber)4415_storage": {
+          "t_struct(Subscriber)4417_storage": {
             "label": "struct TokenGate.Subscriber",
             "members": [
               {
@@ -227,23 +227,29 @@
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(Subscription)4408_storage": {
+          "t_struct(Subscription)4410_storage": {
             "label": "struct TokenGate.Subscription",
             "members": [
+              {
+                "label": "isSubscribable",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "0"
+              },
               {
                 "label": "price",
                 "type": "t_uint256",
                 "offset": 0,
-                "slot": "0"
+                "slot": "1"
               },
               {
                 "label": "duration",
                 "type": "t_uint256",
                 "offset": 0,
-                "slot": "1"
+                "slot": "2"
               }
             ],
-            "numberOfBytes": "64"
+            "numberOfBytes": "96"
           },
           "t_uint256": {
             "label": "uint256",

@@ -110,7 +110,7 @@ describe("TokenGate", function () {
         ContractObj.testToken721, // contract address
         ethers.utils.formatBytes32String("ERC721").toString(), // typeOfcontract bytes32
         -1, // no specific id
-        [ethers.utils.parseEther("0.1"), 2592000], // lifetime access
+        [true, ethers.utils.parseEther("0.1"), 2592000], // lifetime access
         1, // amount (owns >= 1)
       ])
     )
@@ -136,7 +136,7 @@ describe("TokenGate", function () {
         ContractObj.testToken20, // contract address
         ethers.utils.formatBytes32String("ERC20").toString(), // typeOfcontract bytes32
         -1, // no specific id
-        [ethers.utils.parseEther("0.1"), 2592000], // pay 0.1ETH monthly as an alternative to token
+        [true, ethers.utils.parseEther("0.1"), 2592000], // pay 0.1ETH monthly as an alternative to token
         20, // amount (owns >= 20)
       ])
     )
@@ -154,7 +154,7 @@ describe("TokenGate", function () {
         ContractObj.testToken1155, // contract address
         ethers.utils.formatBytes32String("ERC1155").toString(), // typeOfcontract bytes32
         0, // no specific id
-        [ethers.utils.parseEther("0.1"), 2592000], // pay 0.1ETH monthly as an alternative to token
+        [true, ethers.utils.parseEther("0.1"), 2592000], // pay 0.1ETH monthly as an alternative to token
         20, // amount (owns >= 20)
       ])
     )
@@ -196,20 +196,21 @@ describe("TokenGate", function () {
   });
 
   /** Subscription **/
-  it("Set Subscription Fee for  users without TestToken (ERC721) token", async function () {
+  it("Set Subscription for  users without TestToken (ERC721) token", async function () {
     const TokenGateContract = await ContractObj.TokenGate.attach(
       ContractObj.proxyAddress
     );
     // ethers.Contract.
     // const addr = (await ethers.getSigners())[1];
     await expect(
-      TokenGateContract.setFee(
+      TokenGateContract.setSubscription(
         ContractObj.testToken721,
         ethers.utils.parseEther("0.05"),
-        7 // 7days
+        7, // 7days
+        true
       )
     )
-      .to.emit(TokenGateContract, "SetFee")
+      .to.emit(TokenGateContract, "SetSubscription")
       .withArgs(
         ContractObj.testToken721,
         ethers.utils.parseEther("0.05").toString(),
@@ -223,13 +224,14 @@ describe("TokenGate", function () {
     // ethers.Contract.
     // const addr = (await ethers.getSigners())[1];
     await expect(
-      TokenGateContract.setFee(
+      TokenGateContract.setSubscription(
         ContractObj.testToken20,
         ethers.utils.parseEther("0.05"),
-        7 // 7days
+        7, // 7days
+        true
       )
     )
-      .to.emit(TokenGateContract, "SetFee")
+      .to.emit(TokenGateContract, "SetSubscription")
       .withArgs(
         ContractObj.testToken20,
         ethers.utils.parseEther("0.05").toString(),
@@ -243,13 +245,14 @@ describe("TokenGate", function () {
     // ethers.Contract.
     // const addr = (await ethers.getSigners())[1];
     await expect(
-      TokenGateContract.setFee(
+      TokenGateContract.setSubscription(
         ContractObj.testToken1155,
         ethers.utils.parseEther("0.05"),
-        7 // 7days
+        7, // 7days
+        true
       )
     )
-      .to.emit(TokenGateContract, "SetFee")
+      .to.emit(TokenGateContract, "SetSubscription")
       .withArgs(
         ContractObj.testToken1155,
         ethers.utils.parseEther("0.05").toString(),
@@ -263,10 +266,11 @@ describe("TokenGate", function () {
 
     // const [owner] = await ethers.getSigners();
     // expect(await TokenGateContract.checkIfSubscribed(owner.address)).to.be.false;
-    let fee = await TokenGateContract.getFeeForTokenAccess(
-      ContractObj.testToken721
-    );
-    fee = ethers.utils.formatEther(fee.price);
+    const subscriptionDetails =
+      await TokenGateContract.getSubscriptionDetailsForTokenAccess(
+        ContractObj.testToken721
+      );
+    const fee = ethers.utils.formatEther(subscriptionDetails.price);
     const options = { value: ethers.utils.parseEther(fee) };
     await expect(
       TokenGateContract.subscribe(ContractObj.testToken721, options)
@@ -279,10 +283,11 @@ describe("TokenGate", function () {
 
     // const [owner] = await ethers.getSigners();
     // expect(await TokenGateContract.checkIfSubscribed(owner.address)).to.be.false;
-    let fee = await TokenGateContract.getFeeForTokenAccess(
-      ContractObj.testToken1155
-    );
-    fee = ethers.utils.formatEther(fee.price);
+    const subscriptionDetails =
+      await TokenGateContract.getSubscriptionDetailsForTokenAccess(
+        ContractObj.testToken1155
+      );
+    const fee = ethers.utils.formatEther(subscriptionDetails.price);
     const options = { value: ethers.utils.parseEther(fee) };
     await expect(
       TokenGateContract.subscribe(ContractObj.testToken1155, options)
