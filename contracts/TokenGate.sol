@@ -34,6 +34,7 @@ contract TokenGate is AccessControl, Initializable {
     );
     event SetSubscription(
         address contractAddress,
+        bool indexed isSubscribable,
         uint256 indexed price,
         uint256 indexed duration
     );
@@ -333,7 +334,7 @@ contract TokenGate is AccessControl, Initializable {
             price: _price,
             duration: _numOfDays * 1 days
         });
-        emit SetSubscription(_contractAddress, _price, _numOfDays * 1 days);
+        emit SetSubscription(_contractAddress, _isSubscribable, _price, _numOfDays * 1 days);
     }
 
     /**

@@ -213,11 +213,12 @@ describe("TokenGate", function () {
       .to.emit(TokenGateContract, "SetSubscription")
       .withArgs(
         ContractObj.testToken721,
+        true,
         ethers.utils.parseEther("0.05").toString(),
         "604800"
       );
   });
-  it("Set Subscription Fee for  users without TestToken (ERC20) token", async function () {
+  it("Set Subscription for  users without TestToken (ERC20) token", async function () {
     const TokenGateContract = await ContractObj.TokenGate.attach(
       ContractObj.proxyAddress
     );
@@ -234,6 +235,7 @@ describe("TokenGate", function () {
       .to.emit(TokenGateContract, "SetSubscription")
       .withArgs(
         ContractObj.testToken20,
+        true,
         ethers.utils.parseEther("0.05").toString(),
         "604800"
       );
@@ -255,6 +257,7 @@ describe("TokenGate", function () {
       .to.emit(TokenGateContract, "SetSubscription")
       .withArgs(
         ContractObj.testToken1155,
+        true,
         ethers.utils.parseEther("0.05").toString(),
         "604800"
       );
@@ -293,6 +296,38 @@ describe("TokenGate", function () {
       TokenGateContract.subscribe(ContractObj.testToken1155, options)
     ).to.emit(TokenGateContract, "Subscribed");
   });
+
+  it("Deactivate subscription for AccessToken. Instead of acquiring TestTokens (ERC721), User cannot Subscribe ", async function () {
+    const TokenGateContract = await ContractObj.TokenGate.attach(
+      ContractObj.proxyAddress
+    );
+
+    await TokenGateContract.setSubscription(
+      ContractObj.testToken721,
+      ethers.utils.parseEther("0.05"),
+      7, // 7days
+      false
+    );
+
+    // const [owner] = await ethers.getSigners();
+    // expect(await TokenGateContract.checkIfSubscribed(owner.address)).to.be.false;
+    const subscriptionDetails =
+      await TokenGateContract.getSubscriptionDetailsForTokenAccess(
+        ContractObj.testToken721
+      );
+    const fee = ethers.utils.formatEther(subscriptionDetails.price);
+    const options = { value: ethers.utils.parseEther(fee) };
+    await expect(TokenGateContract.subscribe(ContractObj.testToken721, options))
+      .to.throw;
+
+    await TokenGateContract.setSubscription(
+      ContractObj.testToken721,
+      ethers.utils.parseEther("0.05"),
+      7, // 7days
+      true
+    );
+  });
+
   it("Checking Access for TestToken (ERC721) should return true, user paid for subscription,", async function () {
     const TokenGateContract = await ContractObj.TokenGate.attach(
       ContractObj.proxyAddress
