@@ -2,7 +2,7 @@
   "manifestVersion": "3.2",
   "admin": {
     "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "txHash": "0x9e9d1dd4eaddd4a2a451afc3f5df8877a0f0e9221f00d21dcb8bd14dcba67df7"
+    "txHash": "0xdbbbb7f798873fffedf73f12ddd02c99fa71bfa02e3a61d7cd569598ac13174c"
   },
   "proxies": [
     {
@@ -37,14 +37,14 @@
     },
     {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x94035911243bc81c41c69eec2d58042e845d6d03e35cc5130361b8160c6e933e",
+      "txHash": "0x1da3d9876e8e103d3d2393ec1b8788be55b186c02bcfd5790491da3a5020006d",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "ff2f1e4d381f1f226f9ccecf69fce9bb767106f433ae0af384ba63629de8ba6b": {
+    "5c6d56749e9abc429babff56c4f1331fa98a5111f1b0db7adb4be28bf2b35547": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xcac7f62e4d6836f6ff8aa44403898f7e480b5a570987ed9791d72930c43e9068",
+      "txHash": "0xddbd2bdd081e036ee4147512f2f126f20b6ad48e5408faafb065d3e4b6308533",
       "layout": {
         "storage": [
           {
@@ -77,37 +77,49 @@
             "slot": "2",
             "type": "t_mapping(t_address,t_mapping(t_address,t_struct(Subscriber)4419_storage))",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:93"
+            "src": "contracts/TokenGate.sol:96"
+          },
+          {
+            "label": "subscribersPerAccessToken",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_array(t_struct(Subscriber)4419_storage)dyn_storage)",
+            "contract": "TokenGate",
+            "src": "contracts/TokenGate.sol:100"
           },
           {
             "label": "allAccessTokens",
             "offset": 0,
-            "slot": "3",
+            "slot": "4",
             "type": "t_mapping(t_address,t_struct(AccessToken)4405_storage)",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:94"
+            "src": "contracts/TokenGate.sol:102"
           },
           {
             "label": "tokenAdmins",
             "offset": 0,
-            "slot": "4",
+            "slot": "5",
             "type": "t_mapping(t_address,t_address)",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:95"
+            "src": "contracts/TokenGate.sol:103"
           },
           {
             "label": "ethBalanceForToken",
             "offset": 0,
-            "slot": "5",
+            "slot": "6",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "TokenGate",
-            "src": "contracts/TokenGate.sol:96"
+            "src": "contracts/TokenGate.sol:104"
           }
         ],
         "types": {
           "t_address": {
             "label": "address",
             "numberOfBytes": "20"
+          },
+          "t_array(t_struct(Subscriber)4419_storage)dyn_storage": {
+            "label": "struct TokenGate.Subscriber[]",
+            "numberOfBytes": "32"
           },
           "t_bool": {
             "label": "bool",
@@ -123,6 +135,10 @@
           },
           "t_mapping(t_address,t_address)": {
             "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_array(t_struct(Subscriber)4419_storage)dyn_storage)": {
+            "label": "mapping(address => struct TokenGate.Subscriber[])",
             "numberOfBytes": "32"
           },
           "t_mapping(t_address,t_bool)": {
