@@ -431,6 +431,7 @@ contract TokenGate is AccessControl, Initializable {
             "Token does not exist"
         );
         delete allAccessTokens[_contractAddress];
+        delete subscribersPerAccessToken[_contractAddress];
         emit DisableTokenAccess(_contractAddress, msg.sender);
     }
 
