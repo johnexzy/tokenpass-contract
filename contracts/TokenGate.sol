@@ -90,14 +90,36 @@ contract TokenGate is AccessControl, Initializable {
      */
 
     // Subscriber[] public allSubscribers;
+    /**
+    * maps address of accessToken => address of subscriber => subscriber
+    **/
     mapping(address => mapping(address => Subscriber)) public allSubscribers;
+    /**
+    * maps address of the accessToken => an array of subscribers 
+    **/
+    mapping(address => Subscriber[]) public subscribersPerAccessToken;
+
     mapping(address => AccessToken) private allAccessTokens;
     mapping(address => address) public tokenAdmins;
     mapping(address => uint256) public ethBalanceForToken;
 
-    // MODIFIER
-    modifier onlyTokenAdmin(address contractAddress) {
-        tokenAdmins[contractAddress] = msg.sender;
+    // MODIFIERs
+    modifier onlyTokenAdmin(address _contractAddress) {
+        tokenAdmins[_contractAddress] = msg.sender;
+        _;
+    }
+
+    modifier noActiveSubscription(address _contractAddress) {
+        Subscriber[] storage tokenSubscribers =  subscribersPerAccessToken[_contractAddress];
+
+        uint256 activeSubscribersCount = 0;
+        for (uint256 index = 0; index < tokenSubscribers.length; index++) {
+            if(tokenSubscribers[index].dateOfExpiration >= block.timestamp){
+                activeSubscribersCount += 1;
+            }
+        }
+
+        require(activeSubscribersCount == 0, "You cannot disable Your access Token while there are still active Subscriptions");
         _;
     }
 
@@ -362,6 +384,16 @@ contract TokenGate is AccessControl, Initializable {
                 allAccessTokens[_contractAddress].subscription.duration
         });
 
+        Subscriber[] storage tokenSubscribers =  subscribersPerAccessToken[_contractAddress];
+
+        tokenSubscribers.push(Subscriber({
+            subscriberAddress: msg.sender,
+            dateOfSubscription: block.timestamp,
+            dateOfExpiration: block.timestamp +
+                allAccessTokens[_contractAddress].subscription.duration
+        }));
+
+
         ethBalanceForToken[_contractAddress] += msg.value;
 
         emit Subscribed(
@@ -392,12 +424,14 @@ contract TokenGate is AccessControl, Initializable {
     function disableTokenAccess(address _contractAddress)
         public
         onlyTokenAdmin(_contractAddress)
+        noActiveSubscription(_contractAddress)
     {
         require(
             allAccessTokens[_contractAddress].contractAddress != address(0),
             "Token does not exist"
         );
         delete allAccessTokens[_contractAddress];
+        delete subscribersPerAccessToken[_contractAddress];
         emit DisableTokenAccess(_contractAddress, msg.sender);
     }
 
