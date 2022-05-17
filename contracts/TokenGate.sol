@@ -101,6 +101,7 @@ contract TokenGate is AccessControl, Initializable {
 
     mapping(address => AccessToken) private allAccessTokens;
     mapping(address => address) public tokenAdmins;
+    mapping(address => AccessToken[]) public tokensByModerators;
     mapping(address => uint256) public ethBalanceForToken;
 
     // MODIFIERs
@@ -160,6 +161,7 @@ contract TokenGate is AccessControl, Initializable {
         }
         allAccessTokens[_accessToken.contractAddress] = _accessToken;
         tokenAdmins[_accessToken.contractAddress] = msg.sender;
+        tokensByModerators[msg.sender].push(_accessToken);
         emit AddedAccessToken(
             _accessToken.contractAddress,
             _accessToken.typeOfToken,
@@ -416,6 +418,9 @@ contract TokenGate is AccessControl, Initializable {
         );
     }
 
+    function getTokensInitialisedByModerator(address _tokenModerator) public view returns(AccessToken[] memory) {
+        return  tokensByModerators[_tokenModerator];  
+    }
 
     /**
     * TODO: Review: an issue raised about this. check link below
@@ -432,6 +437,11 @@ contract TokenGate is AccessControl, Initializable {
         );
         delete allAccessTokens[_contractAddress];
         delete subscribersPerAccessToken[_contractAddress];
+        for (uint256 index = 0; index < tokensByModerators[msg.sender].length; index++) {
+            if(tokensByModerators[msg.sender][index].contractAddress == _contractAddress){
+                delete tokensByModerators[msg.sender][index];
+            }
+        }
         emit DisableTokenAccess(_contractAddress, msg.sender);
     }
 
