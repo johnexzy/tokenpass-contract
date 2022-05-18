@@ -91,12 +91,12 @@ contract TokenGate is AccessControl, Initializable {
 
     // Subscriber[] public allSubscribers;
     /**
-    * maps address of accessToken => address of subscriber => subscriber
-    **/
+     * maps address of accessToken => address of subscriber => subscriber
+     **/
     mapping(address => mapping(address => Subscriber)) public allSubscribers;
     /**
-    * maps address of the accessToken => an array of subscribers 
-    **/
+     * maps address of the accessToken => an array of subscribers
+     **/
     mapping(address => Subscriber[]) public subscribersPerAccessToken;
 
     mapping(address => AccessToken) private allAccessTokens;
@@ -111,16 +111,21 @@ contract TokenGate is AccessControl, Initializable {
     }
 
     modifier noActiveSubscription(address _contractAddress) {
-        Subscriber[] storage tokenSubscribers =  subscribersPerAccessToken[_contractAddress];
+        Subscriber[] storage tokenSubscribers = subscribersPerAccessToken[
+            _contractAddress
+        ];
 
         uint256 activeSubscribersCount = 0;
         for (uint256 index = 0; index < tokenSubscribers.length; index++) {
-            if(tokenSubscribers[index].dateOfExpiration >= block.timestamp){
+            if (tokenSubscribers[index].dateOfExpiration >= block.timestamp) {
                 activeSubscribersCount += 1;
             }
         }
 
-        require(activeSubscribersCount == 0, "You cannot disable Your access Token while there are still active Subscriptions");
+        require(
+            activeSubscribersCount == 0,
+            "You cannot disable Your access Token while there are still active Subscriptions"
+        );
         _;
     }
 
@@ -175,14 +180,48 @@ contract TokenGate is AccessControl, Initializable {
     /**
      * @dev checkAccess: checks if an address meets the requirement for access set by an accessToken moderator.
      * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
-     * @param _contractAddress: the address of the accessToken that the function wants to check user's access in
+     * @param _contractObj: accessToken that the function wants to check user's access in. address must be initialized before using
      * @param _userAddress: the address that the function wants to validate
      */
-    function checkAccess(address _contractAddress, address _userAddress)
-        public
-        view
-        returns (bool)
-    {
+    function checkAccess(
+        AccessToken memory _contractObj,
+        address _userAddress
+    ) public view returns (bool) {
+        if (_contractObj.contractAddress != address(0)) {
+            if (
+                _contractObj.typeOfToken == ERC_721 &&
+                handleERC721Access(
+                    _contractObj,
+                    _userAddress
+                )
+            ) return true;
+            else if (
+                _contractObj.typeOfToken == ERC_1155 &&
+                handleERC1155Access(
+                    _contractObj,
+                    _userAddress
+                )
+            ) return true;
+            else if (
+                _contractObj.typeOfToken == ERC_20 &&
+                handleERC20Access(
+                    _contractObj,
+                    _userAddress
+                )
+            ) return true;
+        }
+        return false;
+    }
+    /**
+     * @dev checkAccessWithSubscriptionEnabled: checks if an address meets the requirement for access set by an accessToken moderator.
+     * first checks if the address has an active subscription for the accessToken, else, checks if the address has the accessToken (Fungible or Non-Fungible)
+     * @param _contractAddress: the address of the accessToken that the function wants to check user's access in. address must be initialized before using
+     * @param _userAddress: the address that the function wants to validate
+     */
+    function checkAccessWithSubscriptionEnabled(
+        address _contractAddress,
+        address _userAddress
+    ) public view returns (bool) {
         if (allAccessTokens[_contractAddress].contractAddress != address(0)) {
             if (checkIfSubscribed(_contractAddress, _userAddress)) return true;
             if (
@@ -358,7 +397,12 @@ contract TokenGate is AccessControl, Initializable {
             price: _price,
             duration: _numOfDays * 1 days
         });
-        emit SetSubscription(_contractAddress, _isSubscribable, _price, _numOfDays * 1 days);
+        emit SetSubscription(
+            _contractAddress,
+            _isSubscribable,
+            _price,
+            _numOfDays * 1 days
+        );
     }
 
     /**
@@ -371,9 +415,12 @@ contract TokenGate is AccessControl, Initializable {
         require(
             allAccessTokens[_contractAddress].contractAddress ==
                 _contractAddress,
-            "Token disabled or doesn't exist"
+            "Token disabled or not initialised"
         );
-        require(allAccessTokens[_contractAddress].subscription.isSubscribable, "Subscription to this Access Token is Deactivated");
+        require(
+            allAccessTokens[_contractAddress].subscription.isSubscribable,
+            "Subscription to this Access Token is Deactivated"
+        );
         require(
             msg.value == allAccessTokens[_contractAddress].subscription.price,
             "Ether value sent is not correct"
@@ -386,15 +433,18 @@ contract TokenGate is AccessControl, Initializable {
                 allAccessTokens[_contractAddress].subscription.duration
         });
 
-        Subscriber[] storage tokenSubscribers =  subscribersPerAccessToken[_contractAddress];
+        Subscriber[] storage tokenSubscribers = subscribersPerAccessToken[
+            _contractAddress
+        ];
 
-        tokenSubscribers.push(Subscriber({
-            subscriberAddress: msg.sender,
-            dateOfSubscription: block.timestamp,
-            dateOfExpiration: block.timestamp +
-                allAccessTokens[_contractAddress].subscription.duration
-        }));
-
+        tokenSubscribers.push(
+            Subscriber({
+                subscriberAddress: msg.sender,
+                dateOfSubscription: block.timestamp,
+                dateOfExpiration: block.timestamp +
+                    allAccessTokens[_contractAddress].subscription.duration
+            })
+        );
 
         ethBalanceForToken[_contractAddress] += msg.value;
 
@@ -409,7 +459,11 @@ contract TokenGate is AccessControl, Initializable {
     function getSubscriptionDetailsForTokenAccess(address _contractAddress)
         public
         view
-        returns (bool isSubscribable, uint256 price, uint256 duration)
+        returns (
+            bool isSubscribable,
+            uint256 price,
+            uint256 duration
+        )
     {
         (isSubscribable, price, duration) = (
             allAccessTokens[_contractAddress].subscription.isSubscribable,
@@ -418,14 +472,18 @@ contract TokenGate is AccessControl, Initializable {
         );
     }
 
-    function getTokensInitialisedByModerator(address _tokenModerator) public view returns(AccessToken[] memory) {
-        return  tokensByModerators[_tokenModerator];  
+    function getTokensInitialisedByModerator(address _tokenModerator)
+        public
+        view
+        returns (AccessToken[] memory)
+    {
+        return tokensByModerators[_tokenModerator];
     }
 
     /**
-    * TODO: Review: an issue raised about this. check link below
-    * https://github.com/AfroApes/subscription-contract/issues/10#issue-1214532706
-    **/  
+     * TODO: Review: an issue raised about this. check link below
+     * https://github.com/AfroApes/subscription-contract/issues/10#issue-1214532706
+     **/
     function disableTokenAccess(address _contractAddress)
         public
         onlyTokenAdmin(_contractAddress)
@@ -437,8 +495,15 @@ contract TokenGate is AccessControl, Initializable {
         );
         delete allAccessTokens[_contractAddress];
         delete subscribersPerAccessToken[_contractAddress];
-        for (uint256 index = 0; index < tokensByModerators[msg.sender].length; index++) {
-            if(tokensByModerators[msg.sender][index].contractAddress == _contractAddress){
+        for (
+            uint256 index = 0;
+            index < tokensByModerators[msg.sender].length;
+            index++
+        ) {
+            if (
+                tokensByModerators[msg.sender][index].contractAddress ==
+                _contractAddress
+            ) {
                 delete tokensByModerators[msg.sender][index];
             }
         }
