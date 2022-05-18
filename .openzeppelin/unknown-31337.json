@@ -2,7 +2,7 @@
   "manifestVersion": "3.2",
   "admin": {
     "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "txHash": "0xdbbbb7f798873fffedf73f12ddd02c99fa71bfa02e3a61d7cd569598ac13174c"
+    "txHash": "0x39e9e8b60f0b196fb1c5ebf47f8a5cb7bd112c9bfcad58f5dff047edbf2bf5fc"
   },
   "proxies": [
     {
@@ -37,14 +37,14 @@
     },
     {
       "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "txHash": "0x1da3d9876e8e103d3d2393ec1b8788be55b186c02bcfd5790491da3a5020006d",
+      "txHash": "0x276c34c60262a670539f9b19745cc1811c9608c20f9b83ebe2dbdaa00ce3c448",
       "kind": "transparent"
     }
   ],
   "impls": {
-    "5c6d56749e9abc429babff56c4f1331fa98a5111f1b0db7adb4be28bf2b35547": {
+    "1ec73e8acbe03e7f3a786f6d3e935d3e034ab90cc4518ed505c8de2d6378e534": {
       "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "txHash": "0xddbd2bdd081e036ee4147512f2f126f20b6ad48e5408faafb065d3e4b6308533",
+      "txHash": "0x3103da565408121bf1006091c9e551d24c38f61355a338a7891b68c16625299a",
       "layout": {
         "storage": [
           {
@@ -104,18 +104,30 @@
             "src": "contracts/TokenGate.sol:103"
           },
           {
-            "label": "ethBalanceForToken",
+            "label": "tokensByModerators",
             "offset": 0,
             "slot": "6",
-            "type": "t_mapping(t_address,t_uint256)",
+            "type": "t_mapping(t_address,t_array(t_struct(AccessToken)4405_storage)dyn_storage)",
             "contract": "TokenGate",
             "src": "contracts/TokenGate.sol:104"
+          },
+          {
+            "label": "ethBalanceForToken",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TokenGate",
+            "src": "contracts/TokenGate.sol:105"
           }
         ],
         "types": {
           "t_address": {
             "label": "address",
             "numberOfBytes": "20"
+          },
+          "t_array(t_struct(AccessToken)4405_storage)dyn_storage": {
+            "label": "struct TokenGate.AccessToken[]",
+            "numberOfBytes": "32"
           },
           "t_array(t_struct(Subscriber)4419_storage)dyn_storage": {
             "label": "struct TokenGate.Subscriber[]",
@@ -135,6 +147,10 @@
           },
           "t_mapping(t_address,t_address)": {
             "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_array(t_struct(AccessToken)4405_storage)dyn_storage)": {
+            "label": "mapping(address => struct TokenGate.AccessToken[])",
             "numberOfBytes": "32"
           },
           "t_mapping(t_address,t_array(t_struct(Subscriber)4419_storage)dyn_storage)": {

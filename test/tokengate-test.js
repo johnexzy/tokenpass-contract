@@ -80,19 +80,19 @@ describe("TokenGate", function () {
     );
     const [owner] = await ethers.getSigners();
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken721,
         owner.address
       )
     ).to.be.false;
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken20,
         owner.address
       )
     ).to.be.false;
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken1155,
         owner.address
       )
@@ -176,19 +176,19 @@ describe("TokenGate", function () {
     );
     const [owner] = await ethers.getSigners();
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken721,
         owner.address
       )
     ).to.be.true;
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken1155,
         owner.address
       )
     ).to.be.true;
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken20,
         owner.address
       )
@@ -336,7 +336,7 @@ describe("TokenGate", function () {
     const [owner] = await ethers.getSigners();
     // console.log(owner.address);
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken721,
         owner.address
       )
@@ -370,7 +370,7 @@ describe("TokenGate", function () {
 
     const [owner] = await ethers.getSigners();
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken20,
         owner.address
       )
@@ -384,13 +384,13 @@ describe("TokenGate", function () {
     const [owner] = await ethers.getSigners();
     console.log(owner.address);
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken721,
         owner.address
       )
     ).to.be.true;
     expect(
-      await TokenGateContract.checkAccess(
+      await TokenGateContract.checkAccessWithSubscriptionEnabled(
         ContractObj.testToken1155,
         owner.address
       )
@@ -425,5 +425,41 @@ describe("TokenGate", function () {
     )
       .to.emit(TokenGateContract, "WithdrawBalancePaidForToken")
       .withArgs(ContractObj.testToken1155, balance.toString(), owner.address);
+  });
+
+  // users should be able to use the system to check access without initiallizing tokens.
+  // but to use the subscription feature the token must be initialized
+  // using the `checkAccess` method
+  it("Checking Access with TestTokens (ERC20 and ERC1155) should return true", async function () {
+    const TokenGateContract = await ContractObj.TokenGate.attach(
+      ContractObj.proxyAddress
+    );
+
+    const [owner] = await ethers.getSigners();
+    console.log(owner.address);
+    expect(
+      await TokenGateContract.checkAccess(
+        [
+          ContractObj.testToken20, // contract address
+          ethers.utils.formatBytes32String("ERC20").toString(), // typeOfcontract bytes32
+          -1, // no specific id
+          [false, 0, 0], // this method does not accept subscription feature
+          20, // amount (owns >= 20)
+        ],
+        owner.address // address to checkAccess
+      )
+    ).to.be.true;
+    expect(
+      await TokenGateContract.checkAccess(
+        [
+          ContractObj.testToken1155, // contract address
+          ethers.utils.formatBytes32String("ERC1155").toString(), // typeOfcontract bytes32
+          0, // no specific id
+          [false, 0, 0], // thids method does not accept subscription feature
+          20, // amount (owns >= 20)
+        ],
+        owner.address // address to checkAccess
+      )
+    ).to.be.true;
   });
 });
