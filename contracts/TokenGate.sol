@@ -18,6 +18,9 @@ contract TokenGate is AccessControl, Initializable {
     /** The Deployer is inherits the admin role */
     bytes32 public constant ADMIN_ROLE = 0x00;
 
+    /** FEE */
+    uint256 public feePercent = 2;
+    uint256 public feeGeneratedFromCharges = 0;
     /** EVENTS **/
     event Initialized(address indexed initializer);
 
@@ -301,6 +304,10 @@ contract TokenGate is AccessControl, Initializable {
         }
     }
 
+    function setFeePercent(uint256 _fee) public {
+        feePercent = _fee;
+    }
+
     function ethBalancePaidForTokenAccess(address _contractAddress)
         public
         view
@@ -315,13 +322,27 @@ contract TokenGate is AccessControl, Initializable {
             "Value too low"
         );
         uint256 ethBalance = ethBalancePaidForTokenAccess(_contractAddress);
+        uint256 charges = ethBalance * (feePercent / 100);
+        uint256 chargesApplied = ethBalance - charges;
+        feeGeneratedFromCharges += charges;
         ethBalanceForToken[msg.sender][_contractAddress] = 0;
-        AddressUpgradeable.sendValue(payable(msg.sender), ethBalance);
+        AddressUpgradeable.sendValue(payable(msg.sender), chargesApplied);
         emit WithdrawBalancePaidForToken(
             _contractAddress,
             ethBalance,
             msg.sender
         );
+    }
+
+    function withdrawProceedsFromAccruedCharges()
+        external
+        onlyRole(ADMIN_ROLE)
+    {
+        AddressUpgradeable.sendValue(
+            payable(msg.sender),
+            feeGeneratedFromCharges
+        );
+        feeGeneratedFromCharges = 0;
     }
 
     function emergencyWithdraw() external onlyRole(ADMIN_ROLE) {
