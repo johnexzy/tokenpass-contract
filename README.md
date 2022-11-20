@@ -1,4 +1,4 @@
-#Token Pass Smart Contract
+# Token Pass Smart Contract
 
 Are you a creator who want's to share their arts to a specific set of audience, lets say to your community members having your token.
 Or you want to people with a certain NFT to have access to your arts, files or events. 
